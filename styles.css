@@ -129,6 +129,21 @@ h1 { margin: 0; font-size: 1.08rem; letter-spacing: 0.015em; color: #f6f8fd; }
   border-color: #3e4c61;
 }
 
+
+.side-title-panel {
+  border-style: dashed;
+  border-color: #4a5f7c;
+  background: linear-gradient(180deg, #182232 0%, #131b27 100%);
+}
+
+.side-title-panel .panel-header {
+  color: #d6e7ff;
+}
+
+.right-inspector .panel-header {
+  letter-spacing: 0.03em;
+}
+
 .panel-header {
   padding: 0.58rem 0.72rem;
   border-bottom: 1px solid var(--border-0);
@@ -211,6 +226,10 @@ kbd {
 
 .right-inspector { overflow-x: hidden; }
 .inspector-tab { overflow-y: auto; min-height: 0; }
+
+.right-inspector > .panel {
+  scroll-margin-top: 0.8rem;
+}
 
 .left-rail::-webkit-scrollbar,
 .right-inspector::-webkit-scrollbar,
