@@ -9,10 +9,21 @@
   <body>
     <main class="app">
       <aside class="left-rail">
-        <h1>Lost Media Emulator</h1>
+        <section class="app-brand panel">
+          <p class="app-kicker">Develop Workspace</p>
+          <h1>Lost Media Emulator</h1>
+          <p class="app-subtitle">Color-grade and degrade stills/video with realtime analog controls.</p>
+          <div class="app-workflow" role="group" aria-label="Workflow guide quick actions">
+            <button type="button" class="secondary-btn" data-jump-target="importPanel" title="Jump to import controls">Import</button>
+            <button type="button" class="secondary-btn" data-jump-target="presetsPanel" title="Jump to preset controls">Preset</button>
+            <button type="button" class="secondary-btn" data-jump-target="crtEffectsPanel" title="Jump to tuning controls">Tune</button>
+            <button type="button" class="secondary-btn" data-jump-target="exportDock" title="Jump to export controls">Export</button>
+          </div>
+        </section>
         <section class="panel panel-collapsible" id="workspacePanel" aria-label="Workspace shortcuts">
           <header class="panel-header">Workspace shortcuts</header>
           <div class="panel-body quick-grid">
+            <p class="workspace-intro">Jump to any editing stage instantly, then fine-tune with keyboard-friendly controls.</p>
             <div class="jump-list" aria-label="Quick jump panels">
               <button type="button" class="secondary-btn" data-jump-target="presetsPanel">Presets</button>
               <button type="button" class="secondary-btn" data-jump-target="masksPanel">Masks</button>
@@ -148,6 +159,110 @@
           </div>
         </section>
 
+        
+
+        
+
+        
+      </aside>
+
+      <section class="preview-workspace" aria-label="Preview and export workspace">
+        <header class="workspace-toolbar panel">
+          <div class="toolbar-left">
+            <label>Preview mode
+              <div id="previewMode" class="selection-box" role="radiogroup" aria-label="Preview mode">
+                <button type="button" data-value="still" data-selected="true">Still</button>
+                <button type="button" data-value="playback">Playback</button>
+              </div>
+            </label>
+            <label>Preview scale
+              <div id="previewScale" class="selection-box selection-inline" role="radiogroup" aria-label="Preview scale">
+                <button type="button" data-value="1" data-selected="true">100%</button>
+                <button type="button" data-value="0.75">75%</button>
+                <button type="button" data-value="0.5">50%</button>
+                <button type="button" data-value="0.33">33%</button>
+              </div>
+            </label>
+            <label>Source downsample
+              <div id="sourceScale" class="selection-box selection-inline" role="radiogroup" aria-label="Source downsample">
+                <button type="button" data-value="1" data-selected="true">100%</button>
+                <button type="button" data-value="0.75">75%</button>
+                <button type="button" data-value="0.5">50%</button>
+                <button type="button" data-value="0.33">33%</button>
+                <button type="button" data-value="0.25">25%</button>
+              </div>
+            </label>
+          </div>
+          <div class="toolbar-right compare-actions compact-actions">
+            <button id="compareHoldBtn" type="button" title="Hold pointer or Space for temporary compare.">Compare</button>
+            <button id="compareLockBtn" type="button" class="secondary-btn" title="Lock/unlock original compare view" aria-pressed="false">Lock compare</button>
+            <button id="downloadStillBtn" type="button">Download still</button>
+          </div>
+        </header>
+
+        <section class="preview panel">
+          <canvas id="previewCanvas" width="960" height="540"></canvas>
+          <div class="timeline-row">
+            <label>Preview frame (s)
+              <span class="range-control range-control-compact"><input id="previewTime" type="range" min="0" max="0" step="0.01" value="0" disabled /></span>
+            </label>
+            <label>Preview FPS <input id="previewFps" type="number" value="15" min="1" max="60" /></label>
+            <label>Preview quality
+              <div id="previewMaxPixels" class="selection-box selection-inline" role="radiogroup" aria-label="Preview quality">
+                <button type="button" data-value="307200">Fast</button>
+                <button type="button" data-value="921600">Balanced</button>
+                <button type="button" data-value="2073600" data-selected="true">High</button>
+                <button type="button" data-value="0">Unlimited</button>
+              </div>
+            </label>
+          </div>
+        </section>
+
+        <footer class="export-dock panel" id="exportDock">
+          <div class="export-headline">
+            <strong>Delivery</strong>
+            <span>Finalize render settings, then export production-ready output.</span>
+          </div>
+          <div class="dock-grid">
+            <label>FPS <input id="fps" type="number" value="30" min="12" max="120" /></label>
+            <label>Duration (s) <input id="duration" type="number" value="4" min="1" max="20" step="0.5" /></label>
+            <label>Format
+              <div id="exportFormat" class="selection-box selection-inline" role="radiogroup" aria-label="Export format">
+                <button type="button" data-value="mp4" data-selected="true">MP4</button>
+                <button type="button" data-value="webm">WebM</button>
+              </div>
+            </label>
+            <label>Quality <input id="exportQuality" type="number" min="0.5" max="2.5" step="0.1" value="1" /></label>
+            <label>Resolution
+              <div id="exportResolution" class="selection-box selection-inline" role="radiogroup" aria-label="Export resolution">
+                <button type="button" data-value="0" data-selected="true">Source</button>
+                <button type="button" data-value="2160">2160p</button>
+                <button type="button" data-value="1440">1440p</button>
+                <button type="button" data-value="1080">1080p</button>
+                <button type="button" data-value="720">720p</button>
+                <button type="button" data-value="480">480p</button>
+              </div>
+            </label>
+            <label class="checkbox-row dock-audio"><input id="includeOriginalAudio" type="checkbox" /> Include original audio</label>
+          </div>
+          <div class="actions two-up export-actions">
+            <button id="exportBtn">Export video</button>
+            <button id="cancelExportBtn" type="button" class="secondary-btn" disabled>Cancel</button>
+          </div>
+          <p id="exportEstimate" class="export-note">Export summary: 120 frames at 30 FPS (4.0s).</p>
+          <p class="export-note">Audio passthrough uses realtime WebM export for best compatibility.</p>
+          <div id="status" class="status">Load an image to begin.</div>
+          <progress id="progress" max="1" value="0"></progress>
+        </footer>
+      </section>
+
+      <aside class="right-inspector">
+        <section class="panel side-title-panel">
+          <header class="panel-header">Effect stack</header>
+          <div class="panel-body">
+            <p class="workspace-intro">Core render effects are grouped by signal domain: display, digital encoding, film texture, artifacts, and overlays.</p>
+          </div>
+        </section>
         <section class="panel panel-collapsible" id="crtEffectsPanel" aria-label="CRT effects">
           <header class="panel-header panel-header-toggle">
             <span>CRT effects</span>
@@ -207,97 +322,8 @@
             </details>
           </div>
         </section>
-      </aside>
 
-      <section class="preview-workspace">
-        <header class="workspace-toolbar panel">
-          <div class="toolbar-left">
-            <label>Preview mode
-              <div id="previewMode" class="selection-box" role="radiogroup" aria-label="Preview mode">
-                <button type="button" data-value="still" data-selected="true">Still</button>
-                <button type="button" data-value="playback">Playback</button>
-              </div>
-            </label>
-            <label>Preview scale
-              <div id="previewScale" class="selection-box selection-inline" role="radiogroup" aria-label="Preview scale">
-                <button type="button" data-value="1" data-selected="true">100%</button>
-                <button type="button" data-value="0.75">75%</button>
-                <button type="button" data-value="0.5">50%</button>
-                <button type="button" data-value="0.33">33%</button>
-              </div>
-            </label>
-            <label>Source downsample
-              <div id="sourceScale" class="selection-box selection-inline" role="radiogroup" aria-label="Source downsample">
-                <button type="button" data-value="1" data-selected="true">100%</button>
-                <button type="button" data-value="0.75">75%</button>
-                <button type="button" data-value="0.5">50%</button>
-                <button type="button" data-value="0.33">33%</button>
-                <button type="button" data-value="0.25">25%</button>
-              </div>
-            </label>
-          </div>
-          <div class="toolbar-right compare-actions compact-actions">
-            <button id="compareHoldBtn" type="button" title="Hold pointer or Space for temporary compare.">Compare</button>
-            <button id="compareLockBtn" type="button" class="secondary-btn" title="Lock/unlock original compare view" aria-pressed="false">Lock compare</button>
-            <button id="downloadStillBtn" type="button">Download still</button>
-          </div>
-        </header>
-
-        <section class="preview panel">
-          <canvas id="previewCanvas" width="960" height="540"></canvas>
-          <div class="timeline-row">
-            <label>Preview frame (s)
-              <span class="range-control range-control-compact"><input id="previewTime" type="range" min="0" max="0" step="0.01" value="0" disabled /></span>
-            </label>
-            <label>Preview FPS <input id="previewFps" type="number" value="15" min="1" max="60" /></label>
-            <label>Preview quality
-              <div id="previewMaxPixels" class="selection-box selection-inline" role="radiogroup" aria-label="Preview quality">
-                <button type="button" data-value="307200">Fast</button>
-                <button type="button" data-value="921600">Balanced</button>
-                <button type="button" data-value="2073600" data-selected="true">High</button>
-                <button type="button" data-value="0">Unlimited</button>
-              </div>
-            </label>
-          </div>
-        </section>
-
-        <footer class="export-dock panel">
-          <div class="dock-grid">
-            <label>FPS <input id="fps" type="number" value="30" min="12" max="120" /></label>
-            <label>Duration (s) <input id="duration" type="number" value="4" min="1" max="20" step="0.5" /></label>
-            <label>Format
-              <div id="exportFormat" class="selection-box selection-inline" role="radiogroup" aria-label="Export format">
-                <button type="button" data-value="mp4" data-selected="true">MP4</button>
-                <button type="button" data-value="webm">WebM</button>
-              </div>
-            </label>
-            <label>Quality <input id="exportQuality" type="number" min="0.5" max="2.5" step="0.1" value="1" /></label>
-            <label>Resolution
-              <div id="exportResolution" class="selection-box selection-inline" role="radiogroup" aria-label="Export resolution">
-                <button type="button" data-value="0" data-selected="true">Source</button>
-                <button type="button" data-value="2160">2160p</button>
-                <button type="button" data-value="1440">1440p</button>
-                <button type="button" data-value="1080">1080p</button>
-                <button type="button" data-value="720">720p</button>
-                <button type="button" data-value="480">480p</button>
-              </div>
-            </label>
-            <label class="checkbox-row dock-audio"><input id="includeOriginalAudio" type="checkbox" /> Include original audio</label>
-          </div>
-          <div class="actions two-up export-actions">
-            <button id="exportBtn">Export video</button>
-            <button id="cancelExportBtn" type="button" class="secondary-btn" disabled>Cancel</button>
-          </div>
-          <p id="exportEstimate" class="export-note">Export summary: 120 frames at 30 FPS (4.0s).</p>
-          <p class="export-note">Audio passthrough uses realtime WebM export for best compatibility.</p>
-          <div id="status" class="status">Load an image to begin.</div>
-          <progress id="progress" max="1" value="0"></progress>
-        </footer>
-      </section>
-
-      <aside class="right-inspector">
-        <section class="inspector-tab" data-panel="degrade">
-          <section class="panel panel-collapsible" id="artifactsPanel">
+        <section class="panel panel-collapsible" id="artifactsPanel">
             <header class="panel-header">Additional video artifacts</header>
             <div class="panel-body controls-grid panel-grid-2">
               <label>Pixel size <input id="pixelSize" type="number" min="1" max="8" step="1" value="1" /></label>
@@ -316,11 +342,9 @@
                 </div>
               </details>
             </div>
-          </section>
         </section>
 
-        <section class="inspector-tab" data-panel="osd">
-          <section class="panel panel-collapsible" id="osdPanel">
+        <section class="panel panel-collapsible" id="osdPanel">
             <header class="panel-header">Overlays & OSD</header>
             <div class="panel-body">
               <label>Timestamp intensity <span class="range-control"><input id="advancedTimestampOSD" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
@@ -386,7 +410,6 @@
                 </div>
               </label>
             </div>
-          </section>
         </section>
       </aside>
     </main>
