@@ -470,7 +470,47 @@ const FALLBACK_PRESETS = {
     advancedQuantization: 0,
     advancedGenerationLoss: 0,
     advancedMacroBlocking: 0,
+    advancedNeonPhosphorBleed: 0.34,
     maskType: "aperture",
+  },
+  "Neon Sign Bloom (TikTok Style)": {
+    scanlineStrength: 0.24,
+    phosphorMask: 0.74,
+    barrelDistortion: -0.002,
+    bloom: 1,
+    flicker: 0.05,
+    chromaticAberration: 0.58,
+    noise: 0.08,
+    pixelSize: 2,
+    maskScale: 0.82,
+    advancedLineJitter: 0,
+    advancedTimebaseWobble: 0.01,
+    advancedHeadSwitching: 0,
+    advancedChromaDelay: 0.56,
+    advancedCrossColor: 0.62,
+    advancedDropouts: 0,
+    advancedGhosting: 0.54,
+    advancedInterlacing: 0.02,
+    advancedFrameStutter: 0,
+    advancedRfInterference: 0,
+    advancedExposurePump: 0,
+    advancedWhiteBalanceDrift: 0,
+    advancedFocusBreathing: 0,
+    advancedTapeCrease: 0,
+    advancedTimestampOSD: 0,
+    advancedOSDStyle: 0,
+    advancedCctvMonochrome: 0,
+    advancedSaturation: 1.58,
+    advancedQuantization: 0,
+    advancedGenerationLoss: 0,
+    advancedMacroBlocking: 0,
+    advancedFilmGrain: 0,
+    advancedFilmDust: 0,
+    advancedFilmScratches: 0,
+    advancedFilmGateWeave: 0,
+    advancedFilmHalation: 0.54,
+    advancedNeonPhosphorBleed: 0.92,
+    maskType: "dot",
   },
   "Streaming Compression": {
     scanlineStrength: 0.18,
@@ -2024,6 +2064,7 @@ class CRTRenderer {
     const filmScratches = Math.max(0, Math.min(1, Number(params.advancedFilmScratches) || 0));
     const filmGateWeave = Math.max(0, Math.min(1, Number(params.advancedFilmGateWeave) || 0));
     const filmHalation = Math.max(0, Math.min(1, Number(params.advancedFilmHalation) || 0));
+    const neonPhosphorBleed = Math.max(0, Math.min(1, Number(params.advancedNeonPhosphorBleed) || 0));
 
     const stutterHoldFrames = Math.floor(frameStutter * frameStutter * 6);
     const stutteredFrame = stutterHoldFrames > 0 ? frameIndex - (frameIndex % (stutterHoldFrames + 1)) : frameIndex;
@@ -2249,6 +2290,24 @@ class CRTRenderer {
           blueSoft = blueSoft * (1 - haloMix) + blueHoriz * haloMix;
         }
 
+        if (neonPhosphorBleed > 0.001) {
+          const hotCore = Math.max(0, Math.min(1, (luminance - 0.36) / 0.52));
+          const neonMix = neonPhosphorBleed * (0.12 + hotCore * hotCore * 0.88) * (0.45 + params.bloom * 0.55);
+          const wideShift = 2.4 + pixelSize * 0.5;
+          const wideR =
+            this.sampleBilinear(srcData, width, height, ru - pixelStepX * wideShift, qv, 0) * 0.5 +
+            this.sampleBilinear(srcData, width, height, ru + pixelStepX * wideShift, qv, 0) * 0.5;
+          const wideG =
+            this.sampleBilinear(srcData, width, height, gu - pixelStepX * wideShift, qv, 1) * 0.5 +
+            this.sampleBilinear(srcData, width, height, gu + pixelStepX * wideShift, qv, 1) * 0.5;
+          const wideB =
+            this.sampleBilinear(srcData, width, height, bu - pixelStepX * wideShift, qv, 2) * 0.5 +
+            this.sampleBilinear(srcData, width, height, bu + pixelStepX * wideShift, qv, 2) * 0.5;
+          redSoft += (wideR * 0.78 + wideB * 0.22) * neonMix;
+          greenSoft += wideG * neonMix * 0.2;
+          blueSoft += (wideB * 0.78 + wideR * 0.22) * neonMix;
+        }
+
         const grain = (seededNoise(x * 1.91, y * 1.37, temporalFrame * 1.3) - 0.5) * 255 * (0.06 + filmGrain * 0.34);
         redSoft += grain;
         greenSoft += grain * 0.92;
@@ -2354,6 +2413,26 @@ class CRTRenderer {
       outCtx.drawImage(this.workCanvas, 1, 0);
       outCtx.drawImage(this.workCanvas, -1, 0);
       outCtx.restore();
+
+      if (neonPhosphorBleed > 0.001) {
+        const neonGlowAlpha = Math.min(0.82, (0.12 + neonPhosphorBleed * 0.5) * (0.7 + bloom * 0.5));
+        const neonBlur = (2.4 + neonPhosphorBleed * 12.5) * (1 + (pixelSize - 1) * 0.14);
+        outCtx.save();
+        outCtx.globalCompositeOperation = "lighter";
+        outCtx.globalAlpha = neonGlowAlpha;
+        outCtx.filter = `blur(${neonBlur.toFixed(2)}px) saturate(${(1.3 + neonPhosphorBleed * 1.3).toFixed(3)}) brightness(${(1.02 + neonPhosphorBleed * 0.34).toFixed(3)})`;
+        outCtx.drawImage(this.workCanvas, 2, 0);
+        outCtx.drawImage(this.workCanvas, -2, 0);
+        outCtx.restore();
+
+        outCtx.save();
+        outCtx.globalCompositeOperation = "screen";
+        outCtx.globalAlpha = Math.min(0.42, 0.08 + neonPhosphorBleed * 0.34);
+        outCtx.filter = `blur(${(1.2 + neonPhosphorBleed * 4.4).toFixed(2)}px) saturate(${(1.2 + neonPhosphorBleed).toFixed(3)})`;
+        outCtx.drawImage(this.workCanvas, 4, 0);
+        outCtx.drawImage(this.workCanvas, -4, 0);
+        outCtx.restore();
+      }
     }
 
     const vignette = Math.min(0.35, 0.08 + Math.abs(barrel) * 0.22);
@@ -3430,6 +3509,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     "phosphorMask",
     "barrelDistortion",
     "bloom",
+    "advancedNeonPhosphorBleed",
     "flicker",
     "chromaticAberration",
     "noise",
@@ -3524,7 +3604,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     },
     crt: {
       toggleId: "crtEffectsEnabled",
-      controlIds: ["scanlineStrength", "barrelDistortion", "chromaticAberration", "bloom", "flicker"],
+      controlIds: ["scanlineStrength", "barrelDistortion", "chromaticAberration", "bloom", "advancedNeonPhosphorBleed", "flicker"],
     },
     digital: {
       toggleId: "digitalEffectsEnabled",
@@ -3761,6 +3841,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     advancedFilmScratches: "Film scratches",
     advancedFilmGateWeave: "Gate weave",
     advancedFilmHalation: "Halation glow",
+    advancedNeonPhosphorBleed: "Neon bleed",
     macroSourceProvenance: "Detail loss",
     shapeGenerationDepth: "Softness amount",
     macroDisplayEmulation: "Display texture",
