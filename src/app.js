@@ -4772,13 +4772,33 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
 
   function getPresetCategory(name = "", preset = {}) {
     const lowerName = String(name).toLowerCase();
-    if (/(silent film|technicolor|super\s*8|16mm|kinescope|nitrate|newsreel|film|reel)/.test(lowerName)) return "Film";
-    if (/(security|surveillance|cctv)/.test(lowerName)) return "Surveillance";
-    if (/(web rip|streaming|digital|compression|dvd|hdv|smartphone|dslr|4k|hdr|laserdisc)/.test(lowerName)) return "Digital";
-    if (/(pvm|consumer tv|arcade|oled|lcd)/.test(lowerName)) return "Display";
-    if (/(vhs|tape|cam|broadcast|analog|archive|hi8|minidv|u-matic|betacam)/.test(lowerName)) return "Analog Video";
-    if (Number(preset.advancedFilmGrain || 0) > 0.35 || Number(preset.advancedFilmHalation || 0) > 0.35) return "Film";
+    const hasFilmFx = Number(preset.advancedFilmGrain || 0) > 0.3 || Number(preset.advancedFilmHalation || 0) > 0.3;
+    const hasTapeFx = Number(preset.advancedHeadSwitching || 0) > 0.12 || Number(preset.advancedTimebaseWobble || 0) > 0.16 || Number(preset.advancedTapeCrease || 0) > 0.12;
+    const hasDigitalFx = Number(preset.advancedQuantization || 0) > 0.2 || Number(preset.advancedMacroBlocking || 0) > 0.16;
+
+    if (/(silent film|technicolor|super\s*8|16mm|kinescope|nitrate|newsreel|film|reel|polaroid|aerochrome|35mm)/.test(lowerName) || hasFilmFx) return "Film & Photo";
+    if (/(ring|doorbell|spycam|bodycam|security|surveillance|cctv|night vision|ir flood)/.test(lowerName)) return "Surveillance";
+    if (/(pvm|consumer tv|arcade|trinitron|shadow mask|crt|plasma|terminal|office lcd|oled smartphone|ips|lcd|oled)/.test(lowerName)) return "Display Tech";
+    if (/(broadcast|atsc|public access|off-air|kinescope|u-matic|betacam|laserdisc)/.test(lowerName)) return "Broadcast & Transfer";
+    if (/(vhs|tape|hi8|minidv|camcorder|home reel|bootleg|archive|rental|found footage)/.test(lowerName) || hasTapeFx) return "Analog Tape";
+    if (/(web rip|streaming|digital|compression|dvd|hdv|smartphone|dslr|4k|hdr|webcam|gopro|action cam|vcd)/.test(lowerName) || hasDigitalFx) return "Digital Video";
+    if (/(neon|cyberpunk|retro pixel|damaged)/.test(lowerName)) return "Stylized";
     return "Experimental";
+  }
+
+  function getPresetDisplayName(name = "", category = "") {
+    const cleanName = String(name).replace(/\s+/g, " ").trim();
+    return `${category} · ${cleanName}`;
+  }
+
+  function comparePresetCategoryOrder(a = "", b = "") {
+    const order = ["Display Tech", "Analog Tape", "Broadcast & Transfer", "Film & Photo", "Digital Video", "Surveillance", "Stylized", "Experimental"];
+    const aIndex = order.indexOf(a);
+    const bIndex = order.indexOf(b);
+    if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
+    if (aIndex === -1) return 1;
+    if (bIndex === -1) return -1;
+    return aIndex - bIndex;
   }
 
   function updatePresetFilterMeta(visibleCount, totalCount) {
@@ -4804,7 +4824,8 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
       const name = button.dataset.value || "";
       const category = presetCategories.get(name) || "Experimental";
       const categoryMatch = selectedCategory === "all" || category === selectedCategory;
-      const searchMatch = !query || name.toLowerCase().includes(query);
+      const displayName = button.dataset.displayName || name;
+      const searchMatch = !query || name.toLowerCase().includes(query) || displayName.toLowerCase().includes(query);
       const visible = categoryMatch && searchMatch;
       button.hidden = !visible;
       button.dataset.category = category;
@@ -4816,7 +4837,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     }
 
     const groupedButtons = [];
-    const groupedCategories = Array.from(categoryBuckets.keys()).sort((a, b) => a.localeCompare(b));
+    const groupedCategories = Array.from(categoryBuckets.keys()).sort(comparePresetCategoryOrder);
     for (const category of groupedCategories) {
       const categoryButtons = categoryBuckets.get(category);
       categoryButtons.sort((a, b) => (a.dataset.value || "").localeCompare(b.dataset.value || ""));
@@ -4874,10 +4895,13 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
 
     for (const name of names) {
       presetCategories.set(name, getPresetCategory(name, presets[name]));
+      const category = presetCategories.get(name) || "Experimental";
+      const displayName = getPresetDisplayName(name, category);
       const button = document.createElement("button");
       button.type = "button";
       button.dataset.value = name;
-      button.textContent = name;
+      button.dataset.displayName = displayName;
+      button.textContent = displayName;
       if (name === "Consumer TV") {
         button.dataset.selected = "true";
       }
@@ -4885,7 +4909,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     }
 
     if (presetCategoryFilter) {
-      const categories = ["all", ...Array.from(new Set(names.map((name) => presetCategories.get(name))).values()).sort((a, b) => a.localeCompare(b))];
+      const categories = ["all", ...Array.from(new Set(names.map((name) => presetCategories.get(name))).values()).sort(comparePresetCategoryOrder)];
       presetCategoryFilter.innerHTML = "";
       for (const category of categories) {
         const opt = document.createElement("option");
