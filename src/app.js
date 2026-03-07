@@ -4093,26 +4093,59 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     };
 
     const jumpButtons = Array.from(document.querySelectorAll("[data-jump-target]"));
-    for (const button of jumpButtons) {
-      button.addEventListener("click", () => {
-        const target = document.getElementById(button.dataset.jumpTarget || "");
-        if (!target) return;
 
-        const tabPanel = target.closest(".inspector-tab[data-panel]");
-        if (tabPanel) {
-          const tabName = tabPanel.dataset.panel;
-          const tabButton = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
-          tabButton?.click();
-        }
+    const activateJumpTarget = (target) => {
+      if (!target) return;
 
+      const tabPanel = target.closest(".inspector-tab[data-panel]");
+      if (tabPanel) {
+        const tabName = tabPanel.dataset.panel;
+        const tabButton = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+        tabButton?.click();
+      }
+
+      const targetIsCollapsible = collapsiblePanels.includes(target);
+      if (targetIsCollapsible) {
         for (const panel of collapsiblePanels) {
           if (panel.id === "workspacePanel") continue;
           collapsePanel(panel, panel !== target);
         }
+      }
 
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      target.classList.remove("panel-spotlight");
+      requestAnimationFrame(() => target.classList.add("panel-spotlight"));
+      window.setTimeout(() => target.classList.remove("panel-spotlight"), 900);
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+
+    for (const button of jumpButtons) {
+      button.addEventListener("click", () => {
+        const target = document.getElementById(button.dataset.jumpTarget || "");
+        activateJumpTarget(target);
       });
     }
+
+    const workflowButtons = Array.from(document.querySelectorAll(".app-workflow [data-jump-target]"));
+    window.addEventListener("keydown", (event) => {
+      if (!event.altKey || event.ctrlKey || event.metaKey) return;
+      const active = document.activeElement;
+      if (
+        active instanceof HTMLElement &&
+        (active.matches("input, textarea, select") || active.isContentEditable)
+      ) {
+        return;
+      }
+
+      const digitMatch = /^Digit([1-9])$/.exec(event.code || "");
+      if (!digitMatch) return;
+      const index = Number(digitMatch[1]) - 1;
+      const button = workflowButtons[index];
+      if (!button) return;
+
+      event.preventDefault();
+      const target = document.getElementById(button.dataset.jumpTarget || "");
+      activateJumpTarget(target);
+    });
   }
 
   function setupDensityMode() {
