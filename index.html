@@ -9,10 +9,22 @@
   <body>
     <main class="app">
       <aside class="left-rail">
-        <h1>Lost Media Emulator</h1>
+        <section class="app-brand panel">
+          <p class="app-kicker">Develop Workspace</p>
+          <h1>Lost Media Emulator</h1>
+          <p class="app-subtitle">Color-grade and degrade stills/video with realtime analog controls.</p>
+          <div class="app-workflow" role="group" aria-label="Workflow guide quick actions">
+            <button type="button" class="secondary-btn" data-jump-target="importPanel" title="Jump to import controls">Import</button>
+            <button type="button" class="secondary-btn" data-jump-target="presetsPanel" title="Jump to preset controls">Preset</button>
+            <button type="button" class="secondary-btn" data-jump-target="crtEffectsPanel" title="Jump to tuning controls">Tune</button>
+            <button type="button" class="secondary-btn" data-jump-target="exportDock" title="Jump to export controls">Export</button>
+          </div>
+          <p class="app-shortcut-hint">Quick keys: <kbd>Alt+1</kbd> Import · <kbd>Alt+2</kbd> Preset · <kbd>Alt+3</kbd> Tune · <kbd>Alt+4</kbd> Export</p>
+        </section>
         <section class="panel panel-collapsible" id="workspacePanel" aria-label="Workspace shortcuts">
           <header class="panel-header">Workspace shortcuts</header>
           <div class="panel-body quick-grid">
+            <p class="workspace-intro">Jump to any editing stage instantly, then fine-tune with keyboard-friendly controls.</p>
             <div class="jump-list" aria-label="Quick jump panels">
               <button type="button" class="secondary-btn" data-jump-target="presetsPanel">Presets</button>
               <button type="button" class="secondary-btn" data-jump-target="masksPanel">Masks</button>
@@ -21,6 +33,7 @@
               <button type="button" class="secondary-btn" data-jump-target="filmEffectsPanel">Film</button>
               <button type="button" class="secondary-btn" data-jump-target="artifactsPanel">Artifacts</button>
               <button type="button" class="secondary-btn" data-jump-target="osdPanel">OSD</button>
+              <button type="button" class="secondary-btn" data-jump-target="previewPanel">Preview</button>
             </div>
             <label>Control density
               <div id="densityMode" class="selection-box selection-inline" role="radiogroup" aria-label="Control density mode">
@@ -148,68 +161,14 @@
           </div>
         </section>
 
-        <section class="panel panel-collapsible" id="crtEffectsPanel" aria-label="CRT effects">
-          <header class="panel-header panel-header-toggle">
-            <span>CRT effects</span>
-            <label class="panel-toggle"><input id="crtEffectsEnabled" type="checkbox" checked /> Enabled</label>
-          </header>
-          <div class="panel-body quick-grid panel-grid-2">
-            <p class="panel-hint">Tip: double-click any slider or tap ↺ to reset. Hold <kbd>Shift</kbd> for fine adjustments and <kbd>Alt</kbd> for coarse steps.</p>
-            <label>Scanline strength <span class="range-control"><input id="scanlineStrength" type="range" min="0" max="1" step="0.01" value="0.5" /></span></label>
-            <label>Barrel distortion <span class="range-control"><input id="barrelDistortion" type="range" min="-0.3" max="0.3" step="0.005" value="0" /></span></label>
-            <label>Chromatic aberration <span class="range-control"><input id="chromaticAberration" type="range" min="0" max="1" step="0.01" value="0.5" /></span></label>
-            <label>Bloom <span class="range-control"><input id="bloom" type="range" min="0" max="1" step="0.01" value="0.5" /></span></label>
-            <label>Neon bleed <span class="range-control"><input id="advancedNeonPhosphorBleed" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
-            <label>Flicker <span class="range-control"><input id="flicker" type="range" min="0" max="1" step="0.01" value="0.22" /></span></label>
-          </div>
-        </section>
+        
 
-        <section class="panel panel-collapsible" id="digitalEffectsPanel" aria-label="Digital effects">
-          <header class="panel-header panel-header-toggle">
-            <span>Digital effects</span>
-            <label class="panel-toggle"><input id="digitalEffectsEnabled" type="checkbox" checked /> Enabled</label>
-          </header>
-          <div class="panel-body quick-grid panel-grid-2">
-            <label>Noise <span class="range-control"><input id="noise" type="range" min="0" max="1" step="0.01" value="0.5" /></span></label>
-            <label>Frame stutter/drop <span class="range-control"><input id="advancedFrameStutter" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
-            <details class="advanced-disclosure panel-span-2">
-              <summary>Show advanced (6)</summary>
-              <div class="quick-grid">
-                <label>RF interference bands <span class="range-control"><input id="advancedRfInterference" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
-                <label>CCTV monochrome <span class="range-control"><input id="advancedCctvMonochrome" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
-                <label>Saturation <span class="range-control"><input id="advancedSaturation" type="range" min="0" max="2" step="0.01" value="1" /></span></label>
-                <label>Quantization/crush <span class="range-control"><input id="advancedQuantization" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
-                <label>Generation loss <span class="range-control"><input id="advancedGenerationLoss" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
-                <label>Macroblocking <span class="range-control"><input id="advancedMacroBlocking" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
-              </div>
-            </details>
-          </div>
-        </section>
+        
 
-        <section class="panel panel-collapsible" id="filmEffectsPanel" aria-label="Film effects">
-          <header class="panel-header panel-header-toggle">
-            <span>Film effects</span>
-            <label class="panel-toggle"><input id="filmEffectsEnabled" type="checkbox" checked /> Enabled</label>
-          </header>
-          <div class="panel-body quick-grid panel-grid-2">
-            <label>Film grain <span class="range-control"><input id="advancedFilmGrain" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
-            <label>Film dust/specks <span class="range-control"><input id="advancedFilmDust" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
-            <details class="advanced-disclosure panel-span-2">
-              <summary>Show advanced (6)</summary>
-              <div class="quick-grid">
-                <label>Film scratches <span class="range-control"><input id="advancedFilmScratches" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
-                <label>Gate weave <span class="range-control"><input id="advancedFilmGateWeave" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
-                <label>Halation glow <span class="range-control"><input id="advancedFilmHalation" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
-                <label>Exposure pumping <span class="range-control"><input id="advancedExposurePump" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
-                <label>White balance drift <span class="range-control"><input id="advancedWhiteBalanceDrift" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
-                <label>Focus breathing <span class="range-control"><input id="advancedFocusBreathing" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
-              </div>
-            </details>
-          </div>
-        </section>
+        
       </aside>
 
-      <section class="preview-workspace">
+      <section class="preview-workspace" aria-label="Preview and export workspace">
         <header class="workspace-toolbar panel">
           <div class="toolbar-left">
             <label>Preview mode
@@ -243,7 +202,7 @@
           </div>
         </header>
 
-        <section class="preview panel">
+        <section class="preview panel" id="previewPanel">
           <canvas id="previewCanvas" width="960" height="540"></canvas>
           <div class="timeline-row">
             <label>Preview frame (s)
@@ -261,7 +220,11 @@
           </div>
         </section>
 
-        <footer class="export-dock panel">
+        <footer class="export-dock panel" id="exportDock">
+          <div class="export-headline">
+            <strong>Delivery</strong>
+            <span>Finalize render settings, then export production-ready output.</span>
+          </div>
           <div class="dock-grid">
             <label>FPS <input id="fps" type="number" value="30" min="12" max="120" /></label>
             <label>Duration (s) <input id="duration" type="number" value="4" min="1" max="20" step="0.5" /></label>
@@ -296,9 +259,74 @@
       </section>
 
       <aside class="right-inspector">
-        <section class="inspector-tab" data-panel="degrade">
-          <section class="panel panel-collapsible" id="artifactsPanel">
-            <header class="panel-header">Additional video artifacts</header>
+        <section class="panel side-title-panel">
+          <header class="panel-header">Effect stack</header>
+          <div class="panel-body">
+            <p class="workspace-intro">Core render effects are grouped by signal domain: display, digital encoding, film texture, artifacts, and overlays.</p>
+          </div>
+        </section>
+        <section class="panel panel-collapsible" id="crtEffectsPanel" aria-label="CRT effects">
+          <header class="panel-header panel-header-toggle">
+            <span class="stack-badge">1</span><span>CRT effects</span>
+            <label class="panel-toggle"><input id="crtEffectsEnabled" type="checkbox" checked /> Enabled</label>
+          </header>
+          <div class="panel-body quick-grid panel-grid-2">
+            <p class="panel-hint">Tip: double-click any slider or tap ↺ to reset. Hold <kbd>Shift</kbd> for fine adjustments and <kbd>Alt</kbd> for coarse steps.</p>
+            <label>Scanline strength <span class="range-control"><input id="scanlineStrength" type="range" min="0" max="1" step="0.01" value="0.5" /></span></label>
+            <label>Barrel distortion <span class="range-control"><input id="barrelDistortion" type="range" min="-0.3" max="0.3" step="0.005" value="0" /></span></label>
+            <label>Chromatic aberration <span class="range-control"><input id="chromaticAberration" type="range" min="0" max="1" step="0.01" value="0.5" /></span></label>
+            <label>Bloom <span class="range-control"><input id="bloom" type="range" min="0" max="1" step="0.01" value="0.5" /></span></label>
+            <label>Neon bleed <span class="range-control"><input id="advancedNeonPhosphorBleed" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
+            <label>Flicker <span class="range-control"><input id="flicker" type="range" min="0" max="1" step="0.01" value="0.22" /></span></label>
+          </div>
+        </section>
+
+        <section class="panel panel-collapsible" id="digitalEffectsPanel" aria-label="Digital effects">
+          <header class="panel-header panel-header-toggle">
+            <span class="stack-badge">2</span><span>Digital effects</span>
+            <label class="panel-toggle"><input id="digitalEffectsEnabled" type="checkbox" checked /> Enabled</label>
+          </header>
+          <div class="panel-body quick-grid panel-grid-2">
+            <label>Noise <span class="range-control"><input id="noise" type="range" min="0" max="1" step="0.01" value="0.5" /></span></label>
+            <label>Frame stutter/drop <span class="range-control"><input id="advancedFrameStutter" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
+            <details class="advanced-disclosure panel-span-2">
+              <summary>Show advanced (6)</summary>
+              <div class="quick-grid">
+                <label>RF interference bands <span class="range-control"><input id="advancedRfInterference" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
+                <label>CCTV monochrome <span class="range-control"><input id="advancedCctvMonochrome" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
+                <label>Saturation <span class="range-control"><input id="advancedSaturation" type="range" min="0" max="2" step="0.01" value="1" /></span></label>
+                <label>Quantization/crush <span class="range-control"><input id="advancedQuantization" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
+                <label>Generation loss <span class="range-control"><input id="advancedGenerationLoss" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
+                <label>Macroblocking <span class="range-control"><input id="advancedMacroBlocking" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
+              </div>
+            </details>
+          </div>
+        </section>
+
+        <section class="panel panel-collapsible" id="filmEffectsPanel" aria-label="Film effects">
+          <header class="panel-header panel-header-toggle">
+            <span class="stack-badge">3</span><span>Film effects</span>
+            <label class="panel-toggle"><input id="filmEffectsEnabled" type="checkbox" checked /> Enabled</label>
+          </header>
+          <div class="panel-body quick-grid panel-grid-2">
+            <label>Film grain <span class="range-control"><input id="advancedFilmGrain" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
+            <label>Film dust/specks <span class="range-control"><input id="advancedFilmDust" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
+            <details class="advanced-disclosure panel-span-2">
+              <summary>Show advanced (6)</summary>
+              <div class="quick-grid">
+                <label>Film scratches <span class="range-control"><input id="advancedFilmScratches" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
+                <label>Gate weave <span class="range-control"><input id="advancedFilmGateWeave" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
+                <label>Halation glow <span class="range-control"><input id="advancedFilmHalation" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
+                <label>Exposure pumping <span class="range-control"><input id="advancedExposurePump" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
+                <label>White balance drift <span class="range-control"><input id="advancedWhiteBalanceDrift" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
+                <label>Focus breathing <span class="range-control"><input id="advancedFocusBreathing" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
+              </div>
+            </details>
+          </div>
+        </section>
+
+        <section class="panel panel-collapsible" id="artifactsPanel">
+            <header class="panel-header"><span class="stack-badge">4</span><span>Additional video artifacts</span></header>
             <div class="panel-body controls-grid panel-grid-2">
               <label>Pixel size <input id="pixelSize" type="number" min="1" max="8" step="1" value="1" /></label>
               <label>Line jitter <span class="range-control"><input id="advancedLineJitter" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
@@ -316,12 +344,10 @@
                 </div>
               </details>
             </div>
-          </section>
         </section>
 
-        <section class="inspector-tab" data-panel="osd">
-          <section class="panel panel-collapsible" id="osdPanel">
-            <header class="panel-header">Overlays & OSD</header>
+        <section class="panel panel-collapsible" id="osdPanel">
+            <header class="panel-header"><span class="stack-badge">5</span><span>Overlays & OSD</span></header>
             <div class="panel-body">
               <label>Timestamp intensity <span class="range-control"><input id="advancedTimestampOSD" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
               <label>OSD bloom <span class="range-control"><input id="osdBloom" type="range" min="0" max="1" step="0.01" value="0.35" /></span></label>
@@ -386,7 +412,6 @@
                 </div>
               </label>
             </div>
-          </section>
         </section>
       </aside>
     </main>
