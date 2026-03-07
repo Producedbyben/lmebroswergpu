@@ -410,14 +410,14 @@ const FALLBACK_PRESETS = {
   },
   "Retro Pixel LCD": {
     scanlineStrength: 0.08,
-    phosphorMask: 0.04,
+    phosphorMask: 0.38,
     barrelDistortion: 0,
     bloom: 0.08,
     flicker: 0.02,
     chromaticAberration: 0.03,
     noise: 0.04,
     pixelSize: 1,
-    maskScale: 1,
+    maskScale: 0.82,
     advancedLineJitter: 0,
     advancedTimebaseWobble: 0,
     advancedHeadSwitching: 0,
@@ -438,7 +438,7 @@ const FALLBACK_PRESETS = {
     advancedQuantization: 0,
     advancedGenerationLoss: 0,
     advancedMacroBlocking: 0,
-    maskType: "none",
+    maskType: "dot",
   },
   "Cyberpunk OLED": {
     scanlineStrength: 0.14,
@@ -474,7 +474,7 @@ const FALLBACK_PRESETS = {
   },
   "Streaming Compression": {
     scanlineStrength: 0.18,
-    phosphorMask: 0.1,
+    phosphorMask: 0.22,
     barrelDistortion: 0,
     bloom: 0.2,
     flicker: 0.03,
@@ -502,11 +502,11 @@ const FALLBACK_PRESETS = {
     advancedQuantization: 0.3,
     advancedGenerationLoss: 0.12,
     advancedMacroBlocking: 0.32,
-    maskType: "none",
+    maskType: "lowBitrateBlockGrid",
   },
   "Digital Surveillance": {
     scanlineStrength: 0.22,
-    phosphorMask: 0.16,
+    phosphorMask: 0.24,
     barrelDistortion: 0,
     bloom: 0.12,
     flicker: 0.02,
@@ -535,7 +535,7 @@ const FALLBACK_PRESETS = {
     advancedQuantization: 0.24,
     advancedGenerationLoss: 0.08,
     advancedMacroBlocking: 0.18,
-    maskType: "none",
+    maskType: "cmosRollingColumn",
   },
   "Silent Film 1920s": {
     scanlineStrength: 0,
@@ -1074,7 +1074,7 @@ const FALLBACK_PRESETS = {
   },
   "Early Webcam (2008)": {
     scanlineStrength: 0,
-    phosphorMask: 0,
+    phosphorMask: 0.22,
     barrelDistortion: 0,
     bloom: 0.05,
     flicker: 0,
@@ -1102,7 +1102,7 @@ const FALLBACK_PRESETS = {
     advancedQuantization: 0.41,
     advancedGenerationLoss: 0.1,
     advancedMacroBlocking: 0.34,
-    maskType: "none",
+    maskType: "cmosRollingColumn",
   },
   "Polaroid SX-70 Instant": {
     scanlineStrength: 0,
@@ -1415,7 +1415,7 @@ const FALLBACK_PRESETS = {
   },
   "Disposable Security IR Flood": {
     scanlineStrength: 0,
-    phosphorMask: 0,
+    phosphorMask: 0.36,
     barrelDistortion: 0,
     bloom: 0.07,
     flicker: 0,
@@ -1444,7 +1444,7 @@ const FALLBACK_PRESETS = {
     advancedQuantization: 0.51,
     advancedGenerationLoss: 0.21,
     advancedMacroBlocking: 0.43,
-    maskType: "none",
+    maskType: "irBloomSpeckle",
   },
   "ATSC Broadcast Transition (2009)": {
     scanlineStrength: 0.11,
