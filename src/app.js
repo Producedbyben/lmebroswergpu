@@ -3602,6 +3602,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   let lookHistoryIndex = -1;
   let isApplyingLookHistory = false;
   const MAX_LOOK_HISTORY = 80;
+  const LOOK_DRAFT_STORAGE_KEY = "lme:look-draft:v1";
   const PARAM_POLICY_STORAGE_KEY = "lme:param-policy:v1";
   const EFFECT_PANEL_CONFIGS = {
     masks: {
@@ -4567,6 +4568,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     return {
       controls: Object.fromEntries(controlIds.map((id) => [id, Number(document.getElementById(id)?.value || 0)])),
       macros: Object.fromEntries(macroControlIds.map((id) => [id, Number(document.getElementById(id)?.value || 0)])),
+      panelEnabled: Object.fromEntries(Object.keys(EFFECT_PANEL_CONFIGS).map((name) => [name, panelEffectState[name]?.enabled !== false])),
       maskType: maskTypeControl?.getValue() || "phosphor",
       presetIntensity: Number(presetIntensityInput?.value || 1),
     };
@@ -4582,7 +4584,35 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     for (const id of macroControlIds) {
       if (Math.abs(Number(left.macros?.[id] || 0) - Number(right.macros?.[id] || 0)) > 0.0001) return false;
     }
+    for (const panelName of Object.keys(EFFECT_PANEL_CONFIGS)) {
+      const leftEnabled = left.panelEnabled?.[panelName] !== false;
+      const rightEnabled = right.panelEnabled?.[panelName] !== false;
+      if (leftEnabled !== rightEnabled) return false;
+    }
     return true;
+  }
+
+  function persistLookDraft(snapshot) {
+    try {
+      localStorage.setItem(LOOK_DRAFT_STORAGE_KEY, JSON.stringify(snapshot));
+    } catch (error) {
+      console.warn("Failed to persist look draft", error);
+    }
+  }
+
+  function restoreLookDraft() {
+    try {
+      const raw = localStorage.getItem(LOOK_DRAFT_STORAGE_KEY);
+      if (!raw) return false;
+      const snapshot = JSON.parse(raw);
+      if (!snapshot || typeof snapshot !== "object") return false;
+      applyLookState(snapshot, { silentStatus: true });
+      setStatus("Restored your last look draft.", "success");
+      return true;
+    } catch (error) {
+      console.warn("Failed to restore look draft", error);
+      return false;
+    }
   }
 
   function updateLookHistoryButtons() {
@@ -4608,10 +4638,11 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
       lookHistory.shift();
     }
     lookHistoryIndex = lookHistory.length - 1;
+    persistLookDraft(snapshot);
     updateLookHistoryButtons();
   }
 
-  function applyLookState(snapshot) {
+  function applyLookState(snapshot, { silentStatus = false } = {}) {
     if (!snapshot) return;
     isApplyingLookHistory = true;
     for (const id of controlIds) {
@@ -4624,6 +4655,10 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
         setControlValue(id, snapshot.macros[id], { dispatch: false });
       }
     }
+    for (const panelName of Object.keys(EFFECT_PANEL_CONFIGS)) {
+      const enabled = snapshot.panelEnabled?.[panelName] !== false;
+      setEffectPanelEnabled(panelName, enabled, { silentStatus: true, skipHistory: true });
+    }
     if (typeof snapshot.presetIntensity === "number" && presetIntensityInput) {
       presetIntensityInput.value = String(snapshot.presetIntensity);
       presetIntensityInput.__syncRangeNumber?.();
@@ -4635,12 +4670,14 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     updatePresetDirtyState();
     markPreviewDirty();
     progressEl.value = 0;
+    persistLookDraft(captureLookState());
+    if (!silentStatus) setStatus("Look restored.", "success");
   }
 
   function undoLookChange() {
     if (lookHistoryIndex <= 0) return;
     lookHistoryIndex -= 1;
-    applyLookState(lookHistory[lookHistoryIndex]);
+    applyLookState(lookHistory[lookHistoryIndex], { silentStatus: true });
     updateLookHistoryButtons();
     setStatus("Undid look change.", "info");
   }
@@ -4648,7 +4685,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   function redoLookChange() {
     if (lookHistoryIndex >= lookHistory.length - 1) return;
     lookHistoryIndex += 1;
-    applyLookState(lookHistory[lookHistoryIndex]);
+    applyLookState(lookHistory[lookHistoryIndex], { silentStatus: true });
     updateLookHistoryButtons();
     setStatus("Redid look change.", "info");
   }
@@ -5524,7 +5561,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     }
   }
 
-  function setEffectPanelEnabled(panelName, enabled) {
+  function setEffectPanelEnabled(panelName, enabled, { silentStatus = false, skipHistory = false } = {}) {
     const config = EFFECT_PANEL_CONFIGS[panelName];
     const state = panelEffectState[panelName];
     if (!config || !state) return;
@@ -5535,7 +5572,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
       for (const id of config.controlIds) {
         setControlValue(id, 0);
       }
-      setStatus(`${panelName.toUpperCase()} effects disabled.`, "info");
+      if (!silentStatus) setStatus(`${panelName.toUpperCase()} effects disabled.`, "info");
     } else {
       if (state.savedValues) {
         for (const id of config.controlIds) {
@@ -5545,13 +5582,16 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
         }
       }
       state.savedValues = null;
-      setStatus(`${panelName.toUpperCase()} effects enabled.`, "success");
+      if (!silentStatus) setStatus(`${panelName.toUpperCase()} effects enabled.`, "success");
     }
 
+    const toggle = document.getElementById(config.toggleId);
+    if (toggle) toggle.checked = state.enabled;
     updateEffectPanelVisual(panelName, state.enabled);
     updatePresetDirtyState();
     markPreviewDirty();
     progressEl.value = 0;
+    if (!skipHistory) commitLookHistorySnapshot();
   }
 
   function setupEffectPanelToggles() {
@@ -5648,7 +5688,15 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   loadPresets().finally(() => {
     initializePresets();
     defaultParamValues = readParams();
-    commitLookHistorySnapshot();
+    const restoredDraft = restoreLookDraft();
+    if (!restoredDraft) {
+      commitLookHistorySnapshot();
+    } else {
+      lookHistory.length = 0;
+      lookHistory.push(captureLookState());
+      lookHistoryIndex = 0;
+      updateLookHistoryButtons();
+    }
     updateLookHistoryButtons();
     updatePreviewControlsState();
     updateExportControlsState();
