@@ -335,17 +335,25 @@
               </label>
               <label>Start date/time <input id="osdStartDateTime" type="datetime-local" value="1998-10-31T22:48:00" /></label>
               <label class="checkbox-row"><input id="osdCountWithExport" type="checkbox" checked /> Timecode counts up with export/playback</label>
+              <label class="checkbox-row"><input id="osdSyntheticDisclosureEnabled" type="checkbox" checked /> Add "SIMULATED FOOTAGE" disclosure watermark</label>
+              <div class="row">
+                <label>Metadata seed <input id="osdSeed" type="number" min="0" max="999999999" step="1" value="104729" /></label>
+                <label class="checkbox-row"><button id="rerollOsdSeedBtn" type="button" class="secondary-btn">Reroll metadata</button></label>
+              </div>
               <div class="row">
                 <label>Primary text colour <input id="osdPrimaryColor" type="color" value="#ffa84a" /></label>
                 <label>Accent colour <input id="osdAccentColor" type="color" value="#ff3a3a" /></label>
               </div>
               <section class="osd-corner-panel">
                 <header class="osd-corner-title">Custom labels</header>
-                <div class="osd-corner-token-help">Use <code>{date}</code>, <code>{time}</code>, or <code>{datetime}</code>. Quick insert:</div>
+                <div class="osd-corner-token-help">Use <code>{date}</code>, <code>{time}</code>, <code>{datetime}</code>, <code>{tc}</code>, <code>{frame}</code>, or <code>{fps}</code>. Quick insert:</div>
                 <div class="osd-corner-token-actions">
                   <button type="button" class="secondary-btn osd-token-btn" data-osd-token="{date}">Date</button>
                   <button type="button" class="secondary-btn osd-token-btn" data-osd-token="{time}">Time</button>
                   <button type="button" class="secondary-btn osd-token-btn" data-osd-token="{datetime}">Date+Time</button>
+                  <button type="button" class="secondary-btn osd-token-btn" data-osd-token="{tc}">Timecode</button>
+                  <button type="button" class="secondary-btn osd-token-btn" data-osd-token="{frame}">Frame #</button>
+                  <button type="button" class="secondary-btn osd-token-btn" data-osd-token="{fps}">FPS</button>
                 </div>
                 <div class="osd-corner-grid">
                   <label class="osd-corner-item"><span><input id="osdCornerTopLeftEnabled" type="checkbox" checked /> Top-left</span><input id="osdCornerTopLeftText" type="text" value="CAM2" maxlength="80" /></label>
