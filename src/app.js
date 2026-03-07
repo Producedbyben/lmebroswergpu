@@ -5044,7 +5044,11 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     }
   });
 
-  document.getElementById("previewFps").addEventListener("input", () => {
+  document.getElementById("previewFps").addEventListener("input", (event) => {
+    const clampedValue = Math.max(1, Math.min(60, Number(event.target.value) || 15));
+    if (String(clampedValue) !== event.target.value) {
+      event.target.value = String(clampedValue);
+    }
     markPreviewDirty();
     progressEl.value = 0;
   });
@@ -5464,6 +5468,12 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     markPreviewDirty();
   }
 
+  function isTypingContext(target) {
+    if (!(target instanceof Element)) return false;
+    if (target.isContentEditable) return true;
+    return !!target.closest('input, textarea, select, [contenteditable="true"]');
+  }
+
   compareHoldBtn?.addEventListener("pointerdown", () => setCompareState(true, { lock: false }));
   compareHoldBtn?.addEventListener("pointerup", () => {
     if (!compareLocked) setCompareState(false, { lock: false });
@@ -5484,6 +5494,18 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   });
   compareHoldBtn?.addEventListener("blur", () => {
     if (!compareLocked) setCompareState(false, { lock: false });
+  });
+
+  window.addEventListener("keydown", (event) => {
+    if (event.code !== "Space" || event.repeat || compareLocked || isTypingContext(event.target)) return;
+    setCompareState(true, { lock: false });
+    event.preventDefault();
+  });
+
+  window.addEventListener("keyup", (event) => {
+    if (event.code !== "Space" || compareLocked || isTypingContext(event.target)) return;
+    setCompareState(false, { lock: false });
+    event.preventDefault();
   });
 
   setupEffectPanelToggles();
