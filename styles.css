@@ -25,6 +25,32 @@ body {
   background: radial-gradient(circle at 50% -20%, #1b2330 0%, #11151b 45%, #0d0f13 100%);
   color: var(--text-0);
   line-height: 1.35;
+  position: relative;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  width: 34vw;
+  height: 34vw;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.14;
+  z-index: -1;
+  pointer-events: none;
+}
+
+body::before {
+  background: #4d79c7;
+  left: -8vw;
+  top: -12vh;
+}
+
+body::after {
+  background: #568f9f;
+  right: -10vw;
+  bottom: -20vh;
 }
 
 body[data-density="compact"] {
@@ -85,11 +111,18 @@ h1 { margin: 0; font-size: 1.08rem; letter-spacing: 0.015em; color: #f6f8fd; }
   background: linear-gradient(180deg, #243247 0%, #1b2738 100%);
 }
 
+.workspace-intro {
+  margin: 0;
+  font-size: 0.7rem;
+  color: #9fb1c8;
+  line-height: 1.4;
+}
+
 .panel {
   border: 1px solid var(--border-0);
   border-radius: 10px;
   background: linear-gradient(180deg, #1a212d 0%, #151b24 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 8px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 10px 34px rgba(0, 0, 0, 0.25);
 }
 
 .panel:hover {
@@ -206,7 +239,7 @@ kbd {
   justify-content: space-between;
   gap: 0.65rem;
   align-items: start;
-  background: linear-gradient(180deg, #1c2431 0%, #171f2b 100%);
+  background: linear-gradient(180deg, #222e3f 0%, #182230 100%);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -245,6 +278,24 @@ canvas {
   gap: 0.45rem;
   background: linear-gradient(180deg, #151d28 0%, #121923 100%);
   border-color: #354254;
+}
+
+.export-headline {
+  display: grid;
+  gap: 0.12rem;
+  padding: 0.1rem 0.15rem;
+}
+
+.export-headline strong {
+  font-size: 0.79rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #deebff;
+}
+
+.export-headline span {
+  font-size: 0.7rem;
+  color: #98abc5;
 }
 
 .dock-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.5rem; align-items: end; }
@@ -311,6 +362,36 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 input[type="range"] {
   accent-color: #5a90dc;
 }
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #3f77cc 0%, #7ea4de 100%);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #f6f9ff;
+  border: 1px solid #5a79ab;
+  margin-top: -4px;
+}
+
+input[type="range"]::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #3f77cc 0%, #7ea4de 100%);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #f6f9ff;
+  border: 1px solid #5a79ab;
+}
 .range-reset {
   width: 28px;
   min-width: 28px;
@@ -326,6 +407,27 @@ input[type="range"] {
 .controls-grid { display: grid; grid-template-columns: 1fr; gap: 0.56rem; }
 .quick-grid { display: grid; gap: 0.47rem; }
 .jump-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.34rem; }
+
+.jump-list button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-height: 2rem;
+}
+
+.jump-list button::before {
+  font-size: 0.74rem;
+  opacity: 0.9;
+}
+
+.jump-list button:nth-child(1)::before { content: "✦"; }
+.jump-list button:nth-child(2)::before { content: "◫"; }
+.jump-list button:nth-child(3)::before { content: "◉"; }
+.jump-list button:nth-child(4)::before { content: "⌁"; }
+.jump-list button:nth-child(5)::before { content: "◌"; }
+.jump-list button:nth-child(6)::before { content: "▦"; }
+.jump-list button:nth-child(7)::before { content: "⏱"; }
 
 .advanced-disclosure {
   border: 1px solid #344458;
@@ -472,6 +574,7 @@ body[data-density="compact"] .selection-box button { font-size: 0.67rem; }
   .right-inspector { overflow: visible; padding-right: 0; }
   .preview-workspace { order: -1; }
   .workspace-toolbar { position: relative; }
+  .app-workflow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   canvas { max-height: 55vh; }
 }
 
