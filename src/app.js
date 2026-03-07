@@ -1478,6 +1478,168 @@ const FALLBACK_PRESETS = {
     advancedMacroBlocking: 0.22,
     maskType: "lowBitrateBlockGrid",
   },
+  "Sony Trinitron WEGA (2001)": {
+    scanlineStrength: 0.24,
+    phosphorMask: 0.54,
+    barrelDistortion: -0.018,
+    bloom: 0.22,
+    flicker: 0.08,
+    chromaticAberration: 0.06,
+    noise: 0.1,
+    pixelSize: 1,
+    maskScale: 1,
+    advancedLineJitter: 0,
+    advancedTimebaseWobble: 0,
+    advancedHeadSwitching: 0,
+    advancedChromaDelay: 0.04,
+    advancedCrossColor: 0.05,
+    advancedDropouts: 0,
+    advancedGhosting: 0.05,
+    advancedInterlacing: 0.14,
+    advancedFrameStutter: 0,
+    advancedRfInterference: 0.02,
+    advancedExposurePump: 0.02,
+    advancedWhiteBalanceDrift: 0,
+    advancedFocusBreathing: 0,
+    advancedTapeCrease: 0,
+    advancedTimestampOSD: 0,
+    advancedOSDStyle: 0,
+    advancedCctvMonochrome: 0,
+    advancedQuantization: 0,
+    advancedGenerationLoss: 0,
+    advancedMacroBlocking: 0,
+    maskType: "aperture",
+  },
+  "Shadow Mask CRT Terminal (Amber)": {
+    scanlineStrength: 0.36,
+    phosphorMask: 0.62,
+    barrelDistortion: -0.01,
+    bloom: 0.18,
+    flicker: 0.04,
+    chromaticAberration: 0,
+    noise: 0.08,
+    pixelSize: 1,
+    maskScale: 0.92,
+    advancedLineJitter: 0,
+    advancedTimebaseWobble: 0,
+    advancedHeadSwitching: 0,
+    advancedChromaDelay: 0,
+    advancedCrossColor: 0,
+    advancedDropouts: 0,
+    advancedGhosting: 0.02,
+    advancedInterlacing: 0,
+    advancedFrameStutter: 0,
+    advancedRfInterference: 0.01,
+    advancedExposurePump: 0,
+    advancedWhiteBalanceDrift: 0,
+    advancedFocusBreathing: 0,
+    advancedTapeCrease: 0,
+    advancedTimestampOSD: 0,
+    advancedOSDStyle: 0,
+    advancedCctvMonochrome: 0.86,
+    advancedSaturation: 0.28,
+    advancedQuantization: 0,
+    advancedGenerationLoss: 0,
+    advancedMacroBlocking: 0,
+    maskType: "shadowMask",
+  },
+  "IPS Office LCD (2013)": {
+    scanlineStrength: 0.02,
+    phosphorMask: 0.2,
+    barrelDistortion: 0,
+    bloom: 0.04,
+    flicker: 0,
+    chromaticAberration: 0.01,
+    noise: 0.03,
+    pixelSize: 1,
+    maskScale: 0.9,
+    advancedLineJitter: 0,
+    advancedTimebaseWobble: 0,
+    advancedHeadSwitching: 0,
+    advancedChromaDelay: 0,
+    advancedCrossColor: 0,
+    advancedDropouts: 0,
+    advancedGhosting: 0,
+    advancedInterlacing: 0,
+    advancedFrameStutter: 0,
+    advancedRfInterference: 0,
+    advancedExposurePump: 0,
+    advancedWhiteBalanceDrift: 0,
+    advancedFocusBreathing: 0,
+    advancedTapeCrease: 0,
+    advancedTimestampOSD: 0,
+    advancedOSDStyle: 0,
+    advancedCctvMonochrome: 0,
+    advancedQuantization: 0,
+    advancedGenerationLoss: 0,
+    advancedMacroBlocking: 0,
+    maskType: "lcdStripeRGB",
+  },
+  "OLED Smartphone PenTile (2018)": {
+    scanlineStrength: 0,
+    phosphorMask: 0.24,
+    barrelDistortion: 0,
+    bloom: 0.12,
+    flicker: 0,
+    chromaticAberration: 0.01,
+    noise: 0.03,
+    pixelSize: 1,
+    maskScale: 0.86,
+    advancedLineJitter: 0,
+    advancedTimebaseWobble: 0,
+    advancedHeadSwitching: 0,
+    advancedChromaDelay: 0,
+    advancedCrossColor: 0,
+    advancedDropouts: 0,
+    advancedGhosting: 0.01,
+    advancedInterlacing: 0,
+    advancedFrameStutter: 0,
+    advancedRfInterference: 0,
+    advancedExposurePump: 0,
+    advancedWhiteBalanceDrift: 0,
+    advancedFocusBreathing: 0,
+    advancedTapeCrease: 0,
+    advancedTimestampOSD: 0,
+    advancedOSDStyle: 0,
+    advancedCctvMonochrome: 0,
+    advancedSaturation: 1.08,
+    advancedQuantization: 0,
+    advancedGenerationLoss: 0,
+    advancedMacroBlocking: 0,
+    maskType: "oledPentile",
+  },
+  "Pioneer Plasma TV (2007)": {
+    scanlineStrength: 0.06,
+    phosphorMask: 0.34,
+    barrelDistortion: 0,
+    bloom: 0.32,
+    flicker: 0.02,
+    chromaticAberration: 0.03,
+    noise: 0.09,
+    pixelSize: 1,
+    maskScale: 1.15,
+    advancedLineJitter: 0,
+    advancedTimebaseWobble: 0,
+    advancedHeadSwitching: 0,
+    advancedChromaDelay: 0,
+    advancedCrossColor: 0,
+    advancedDropouts: 0,
+    advancedGhosting: 0.04,
+    advancedInterlacing: 0,
+    advancedFrameStutter: 0.03,
+    advancedRfInterference: 0,
+    advancedExposurePump: 0.05,
+    advancedWhiteBalanceDrift: 0,
+    advancedFocusBreathing: 0,
+    advancedTapeCrease: 0,
+    advancedTimestampOSD: 0,
+    advancedOSDStyle: 0,
+    advancedCctvMonochrome: 0,
+    advancedQuantization: 0.03,
+    advancedGenerationLoss: 0,
+    advancedMacroBlocking: 0,
+    maskType: "plasmaCell",
+  },
 };
 
 const MP4_MUXER_CDN = "https://cdn.jsdelivr.net/npm/mp4-muxer@5.1.2/build/mp4-muxer.mjs";
@@ -1971,6 +2133,46 @@ class CRTRenderer {
           rMask = dotGain;
           gMask = dotGain;
           bMask = dotGain;
+        } else if (maskType === "shadowMask") {
+          const cellX = maskX % 6;
+          const cellY = maskY % 4;
+          const subpixelRow = cellY < 2;
+          const subpixel = Math.floor(cellX / 2);
+          const apertureOpen = cellX % 2 === 0;
+          const bright = 1 + maskStrength * 0.36;
+          const dark = 1 - maskStrength * 0.26;
+          rMask = subpixelRow && apertureOpen && subpixel === 0 ? bright : dark;
+          gMask = subpixelRow && apertureOpen && subpixel === 1 ? bright : dark;
+          bMask = subpixelRow && apertureOpen && subpixel === 2 ? bright : dark;
+        } else if (maskType === "lcdStripeRGB") {
+          const stripe = maskX % 3;
+          const columnLeak = 1 - maskStrength * 0.08;
+          const active = 1 + maskStrength * 0.28;
+          const inactive = 1 - maskStrength * 0.2;
+          rMask = stripe === 0 ? active : inactive;
+          gMask = stripe === 1 ? active : inactive;
+          bMask = stripe === 2 ? active : inactive;
+          rMask *= columnLeak;
+          gMask *= columnLeak;
+          bMask *= columnLeak;
+        } else if (maskType === "oledPentile") {
+          const pentileX = maskX % 4;
+          const pentileY = maskY % 2;
+          const hot = 1 + maskStrength * 0.3;
+          const cool = 1 - maskStrength * 0.16;
+          const greenShare = pentileY === 0 ? (pentileX === 1 || pentileX === 3) : (pentileX === 0 || pentileX === 2);
+          rMask = pentileX === 0 || pentileX === 2 ? hot : cool;
+          gMask = greenShare ? hot : cool;
+          bMask = pentileX === 1 || pentileX === 3 ? hot : cool;
+        } else if (maskType === "plasmaCell") {
+          const cellX = Math.floor(maskX / 2);
+          const cellY = Math.floor(maskY / 2);
+          const pulse = 0.9 + 0.1 * Math.sin(temporalSeconds * 9 + (cellX + cellY) * 0.3);
+          const gasNoise = seededNoise(cellX * 0.19, cellY * 0.19, temporalFrame * 0.2) - 0.5;
+          const cellGain = 1 + maskStrength * (gasNoise * 0.24 + (pulse - 1) * 0.38);
+          rMask = cellGain * (1 + maskStrength * 0.02);
+          gMask = cellGain;
+          bMask = cellGain * (1 - maskStrength * 0.02);
         } else if (maskType === "filmSuper8") {
           const edgeX = Math.min(x / Math.max(1, width), (width - x) / Math.max(1, width));
           const edgeY = Math.min(y / Math.max(1, height), (height - y) / Math.max(1, height));
