@@ -5,7 +5,7 @@ This project is a browser-based editor that applies CRT, VHS, camcorder, broadca
 ## What the tool does
 
 - Loads **images or videos** as the source media.
-- Applies a large set of analog/retro simulation effects in real time (scanlines, phosphor mask, warp, jitter, chroma delay, dropouts, ghosting, interlacing, RF interference, film grain/dust/scratches, and more).
+- Applies a large set of analog/retro simulation effects in real time (scanlines, multiple display masks including phosphor/aperture/shadow-mask/LCD/OLED/plasma patterns, warp, jitter, chroma delay, dropouts, ghosting, interlacing, RF interference, film grain/dust/scratches, and more).
 - Lets you quickly start from **presets** and then fine tune with direct sliders.
 - Supports **preset intensity**, preset filtering/search, and “dirty” state detection when your current settings deviate from the chosen preset.
 - Includes **macro controls** that move multiple low-level parameters together for faster stylization.
