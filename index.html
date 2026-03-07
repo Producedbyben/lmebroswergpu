@@ -19,6 +19,7 @@
             <button type="button" class="secondary-btn" data-jump-target="crtEffectsPanel" title="Jump to tuning controls">Tune</button>
             <button type="button" class="secondary-btn" data-jump-target="exportDock" title="Jump to export controls">Export</button>
           </div>
+          <p class="app-shortcut-hint">Quick keys: <kbd>Alt+1</kbd> Import · <kbd>Alt+2</kbd> Preset · <kbd>Alt+3</kbd> Tune · <kbd>Alt+4</kbd> Export</p>
         </section>
         <section class="panel panel-collapsible" id="workspacePanel" aria-label="Workspace shortcuts">
           <header class="panel-header">Workspace shortcuts</header>
@@ -32,6 +33,7 @@
               <button type="button" class="secondary-btn" data-jump-target="filmEffectsPanel">Film</button>
               <button type="button" class="secondary-btn" data-jump-target="artifactsPanel">Artifacts</button>
               <button type="button" class="secondary-btn" data-jump-target="osdPanel">OSD</button>
+              <button type="button" class="secondary-btn" data-jump-target="previewPanel">Preview</button>
             </div>
             <label>Control density
               <div id="densityMode" class="selection-box selection-inline" role="radiogroup" aria-label="Control density mode">
@@ -200,7 +202,7 @@
           </div>
         </header>
 
-        <section class="preview panel">
+        <section class="preview panel" id="previewPanel">
           <canvas id="previewCanvas" width="960" height="540"></canvas>
           <div class="timeline-row">
             <label>Preview frame (s)
@@ -265,7 +267,7 @@
         </section>
         <section class="panel panel-collapsible" id="crtEffectsPanel" aria-label="CRT effects">
           <header class="panel-header panel-header-toggle">
-            <span>CRT effects</span>
+            <span class="stack-badge">1</span><span>CRT effects</span>
             <label class="panel-toggle"><input id="crtEffectsEnabled" type="checkbox" checked /> Enabled</label>
           </header>
           <div class="panel-body quick-grid panel-grid-2">
@@ -281,7 +283,7 @@
 
         <section class="panel panel-collapsible" id="digitalEffectsPanel" aria-label="Digital effects">
           <header class="panel-header panel-header-toggle">
-            <span>Digital effects</span>
+            <span class="stack-badge">2</span><span>Digital effects</span>
             <label class="panel-toggle"><input id="digitalEffectsEnabled" type="checkbox" checked /> Enabled</label>
           </header>
           <div class="panel-body quick-grid panel-grid-2">
@@ -303,7 +305,7 @@
 
         <section class="panel panel-collapsible" id="filmEffectsPanel" aria-label="Film effects">
           <header class="panel-header panel-header-toggle">
-            <span>Film effects</span>
+            <span class="stack-badge">3</span><span>Film effects</span>
             <label class="panel-toggle"><input id="filmEffectsEnabled" type="checkbox" checked /> Enabled</label>
           </header>
           <div class="panel-body quick-grid panel-grid-2">
@@ -324,7 +326,7 @@
         </section>
 
         <section class="panel panel-collapsible" id="artifactsPanel">
-            <header class="panel-header">Additional video artifacts</header>
+            <header class="panel-header"><span class="stack-badge">4</span><span>Additional video artifacts</span></header>
             <div class="panel-body controls-grid panel-grid-2">
               <label>Pixel size <input id="pixelSize" type="number" min="1" max="8" step="1" value="1" /></label>
               <label>Line jitter <span class="range-control"><input id="advancedLineJitter" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
@@ -345,7 +347,7 @@
         </section>
 
         <section class="panel panel-collapsible" id="osdPanel">
-            <header class="panel-header">Overlays & OSD</header>
+            <header class="panel-header"><span class="stack-badge">5</span><span>Overlays & OSD</span></header>
             <div class="panel-body">
               <label>Timestamp intensity <span class="range-control"><input id="advancedTimestampOSD" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
               <label>OSD bloom <span class="range-control"><input id="osdBloom" type="range" min="0" max="1" step="0.01" value="0.35" /></span></label>
