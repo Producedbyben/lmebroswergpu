@@ -422,37 +422,69 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 .range-number { width: 100%; }
 
 input[type="range"] {
-  accent-color: #5a90dc;
+  --range-progress: 50%;
+  --range-track: #2b3341;
+  --range-fill-start: #6aa8f0;
+  --range-fill-end: #4c7ec4;
+  appearance: none;
+  -webkit-appearance: none;
+  height: 18px;
+  background: transparent;
+  cursor: pointer;
 }
 
 input[type="range"]::-webkit-slider-runnable-track {
-  height: 6px;
+  height: 7px;
   border-radius: 999px;
-  background: linear-gradient(90deg, #3f77cc 0%, #7ea4de 100%);
+  border: 1px solid #3e4b5e;
+  background: linear-gradient(
+    90deg,
+    var(--range-fill-start) 0%,
+    var(--range-fill-end) var(--range-progress),
+    var(--range-track) var(--range-progress),
+    var(--range-track) 100%
+  );
 }
 
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 14px;
-  height: 14px;
+  width: 15px;
+  height: 15px;
   border-radius: 50%;
-  background: #f6f9ff;
-  border: 1px solid #5a79ab;
-  margin-top: -4px;
+  background: radial-gradient(circle at 30% 30%, #ffffff 0%, #ecf3ff 55%, #d2e0f5 100%);
+  border: 1px solid #6d87ad;
+  margin-top: -5px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+}
+
+input[type="range"]:hover::-webkit-slider-thumb {
+  border-color: #90afd9;
+}
+
+input[type="range"]:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px rgba(109, 162, 238, 0.25), 0 1px 4px rgba(0, 0, 0, 0.45);
 }
 
 input[type="range"]::-moz-range-track {
-  height: 6px;
+  height: 7px;
   border-radius: 999px;
-  background: linear-gradient(90deg, #3f77cc 0%, #7ea4de 100%);
+  border: 1px solid #3e4b5e;
+  background: var(--range-track);
+}
+
+input[type="range"]::-moz-range-progress {
+  height: 7px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--range-fill-start) 0%, var(--range-fill-end) 100%);
 }
 
 input[type="range"]::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
+  width: 15px;
+  height: 15px;
   border-radius: 50%;
-  background: #f6f9ff;
-  border: 1px solid #5a79ab;
+  background: radial-gradient(circle at 30% 30%, #ffffff 0%, #ecf3ff 55%, #d2e0f5 100%);
+  border: 1px solid #6d87ad;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
 }
 .range-reset {
   width: 28px;

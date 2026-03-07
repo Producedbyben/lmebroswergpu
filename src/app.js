@@ -3944,10 +3944,23 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
       wrapper.appendChild(resetBtn);
     }
 
+    const updateRangeVisual = () => {
+      const min = Number(slider.min);
+      const max = Number(slider.max);
+      const current = Number(slider.value);
+      if (!Number.isFinite(min) || !Number.isFinite(max) || max <= min || !Number.isFinite(current)) {
+        slider.style.setProperty("--range-progress", "50%");
+        return;
+      }
+      const pct = ((current - min) / (max - min)) * 100;
+      slider.style.setProperty("--range-progress", `${Math.max(0, Math.min(100, pct)).toFixed(2)}%`);
+    };
+
     const syncToNumber = () => {
       numericInput.value = slider.value;
       numericInput.disabled = slider.disabled;
       if (resetBtn) resetBtn.disabled = slider.disabled;
+      updateRangeVisual();
     };
 
     const clampToRange = (value) => {
