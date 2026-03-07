@@ -4582,6 +4582,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
 
     const buttons = Array.from(presetSelect.querySelectorAll("button[data-value]"));
     const visibleNames = [];
+    const categoryBuckets = new Map();
     for (const button of buttons) {
       const name = button.dataset.value || "";
       const category = presetCategories.get(name) || "Experimental";
@@ -4589,7 +4590,28 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
       const searchMatch = !query || name.toLowerCase().includes(query);
       const visible = categoryMatch && searchMatch;
       button.hidden = !visible;
-      if (visible) visibleNames.push(name);
+      button.dataset.category = category;
+      if (visible) {
+        visibleNames.push(name);
+        if (!categoryBuckets.has(category)) categoryBuckets.set(category, []);
+        categoryBuckets.get(category).push(button);
+      }
+    }
+
+    const groupedButtons = [];
+    const groupedCategories = Array.from(categoryBuckets.keys()).sort((a, b) => a.localeCompare(b));
+    for (const category of groupedCategories) {
+      const categoryButtons = categoryBuckets.get(category);
+      categoryButtons.sort((a, b) => (a.dataset.value || "").localeCompare(b.dataset.value || ""));
+      groupedButtons.push(...categoryButtons);
+    }
+
+    for (const button of buttons) {
+      if (!button.hidden && !groupedButtons.includes(button)) groupedButtons.push(button);
+    }
+
+    for (const button of groupedButtons) {
+      presetSelect.appendChild(button);
     }
 
     updatePresetFilterMeta(visibleNames.length, buttons.length);
