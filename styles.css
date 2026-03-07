@@ -99,7 +99,7 @@ h1 { margin: 0; font-size: 1.08rem; letter-spacing: 0.015em; color: #f6f8fd; }
   gap: 0.3rem;
 }
 
-.app-workflow > span {
+.app-workflow > button {
   text-align: center;
   font-size: 0.62rem;
   letter-spacing: 0.04em;
@@ -109,6 +109,16 @@ h1 { margin: 0; font-size: 1.08rem; letter-spacing: 0.015em; color: #f6f8fd; }
   padding: 0.18rem 0.2rem;
   color: #c8d8ef;
   background: linear-gradient(180deg, #243247 0%, #1b2738 100%);
+}
+.app-workflow > button {
+  width: 100%;
+  min-height: 1.85rem;
+  font-weight: 600;
+}
+
+.app-workflow > button:hover {
+  border-color: #6f89ac;
+  background: linear-gradient(180deg, #2a3a52 0%, #213249 100%);
 }
 
 .workspace-intro {

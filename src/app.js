@@ -4105,9 +4105,12 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
           tabButton?.click();
         }
 
-        for (const panel of collapsiblePanels) {
-          if (panel.id === "workspacePanel") continue;
-          collapsePanel(panel, panel !== target);
+        const targetIsCollapsible = collapsiblePanels.includes(target);
+        if (targetIsCollapsible) {
+          for (const panel of collapsiblePanels) {
+            if (panel.id === "workspacePanel") continue;
+            collapsePanel(panel, panel !== target);
+          }
         }
 
         target.scrollIntoView({ behavior: "smooth", block: "start" });

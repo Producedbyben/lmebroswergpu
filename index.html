@@ -13,11 +13,11 @@
           <p class="app-kicker">Develop Workspace</p>
           <h1>Lost Media Emulator</h1>
           <p class="app-subtitle">Color-grade and degrade stills/video with realtime analog controls.</p>
-          <div class="app-workflow" aria-label="Workflow guide">
-            <span>Import</span>
-            <span>Preset</span>
-            <span>Tune</span>
-            <span>Export</span>
+          <div class="app-workflow" role="group" aria-label="Workflow guide quick actions">
+            <button type="button" class="secondary-btn" data-jump-target="importPanel" title="Jump to import controls">Import</button>
+            <button type="button" class="secondary-btn" data-jump-target="presetsPanel" title="Jump to preset controls">Preset</button>
+            <button type="button" class="secondary-btn" data-jump-target="crtEffectsPanel" title="Jump to tuning controls">Tune</button>
+            <button type="button" class="secondary-btn" data-jump-target="exportDock" title="Jump to export controls">Export</button>
           </div>
         </section>
         <section class="panel panel-collapsible" id="workspacePanel" aria-label="Workspace shortcuts">
@@ -218,7 +218,7 @@
           </div>
         </section>
 
-        <footer class="export-dock panel">
+        <footer class="export-dock panel" id="exportDock">
           <div class="export-headline">
             <strong>Delivery</strong>
             <span>Finalize render settings, then export production-ready output.</span>
