@@ -2054,8 +2054,13 @@ class CRTRenderer {
       modern: '"Inter", "Segoe UI", "Arial", sans-serif',
     };
     const cctvMonochrome = Math.max(0, Math.min(1, Number(params.advancedCctvMonochrome) || 0));
+    const brightness = Math.max(0.5, Math.min(1.5, Number(params.imageBrightness) || 1));
+    const contrast = Math.max(0.5, Math.min(1.6, Number(params.imageContrast) || 1));
     const saturationRaw = Number(params.advancedSaturation);
     const saturation = Math.max(0, Math.min(2, Number.isFinite(saturationRaw) ? saturationRaw : 1));
+    const gamma = Math.max(0.6, Math.min(1.8, Number(params.imageGamma) || 1));
+    const temperature = Math.max(-1, Math.min(1, Number(params.imageTemperature) || 0));
+    const tint = Math.max(-1, Math.min(1, Number(params.imageTint) || 0));
     const quantization = Math.max(0, Math.min(1, Number(params.advancedQuantization) || 0));
     const generationLoss = Math.max(0, Math.min(1, Number(params.advancedGenerationLoss) || 0));
     const macroBlocking = Math.max(0, Math.min(1, Number(params.advancedMacroBlocking) || 0));
@@ -2776,12 +2781,48 @@ class CRTRenderer {
       outCtx.restore();
     }
 
-    if (Math.abs(saturation - 1) > 0.001) {
+    if (
+      Math.abs(saturation - 1) > 0.001 ||
+      Math.abs(brightness - 1) > 0.001 ||
+      Math.abs(contrast - 1) > 0.001
+    ) {
       outCtx.save();
       outCtx.globalAlpha = 1;
-      outCtx.filter = `saturate(${saturation.toFixed(3)})`;
+      outCtx.filter = `brightness(${brightness.toFixed(3)}) contrast(${contrast.toFixed(3)}) saturate(${saturation.toFixed(3)})`;
       outCtx.drawImage(outCtx.canvas, 0, 0);
       outCtx.restore();
+    }
+
+    if (
+      Math.abs(gamma - 1) > 0.001 ||
+      Math.abs(temperature) > 0.001 ||
+      Math.abs(tint) > 0.001
+    ) {
+      const image = outCtx.getImageData(0, 0, width, height);
+      const data = image.data;
+      const invGamma = 1 / gamma;
+      const tempShift = temperature * 28;
+      const tintShift = tint * 24;
+      for (let i = 0; i < data.length; i += 4) {
+        let r = data[i];
+        let g = data[i + 1];
+        let b = data[i + 2];
+
+        if (Math.abs(gamma - 1) > 0.001) {
+          r = Math.pow(r / 255, invGamma) * 255;
+          g = Math.pow(g / 255, invGamma) * 255;
+          b = Math.pow(b / 255, invGamma) * 255;
+        }
+
+        r += tempShift + tintShift * 0.33;
+        g -= tintShift;
+        b -= tempShift + tintShift * 0.33;
+
+        data[i] = Math.max(0, Math.min(255, r));
+        data[i + 1] = Math.max(0, Math.min(255, g));
+        data[i + 2] = Math.max(0, Math.min(255, b));
+      }
+      outCtx.putImageData(image, 0, 0);
     }
   }
 }
@@ -3511,6 +3552,11 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     "phosphorMask",
     "barrelDistortion",
     "bloom",
+    "imageBrightness",
+    "imageContrast",
+    "imageGamma",
+    "imageTemperature",
+    "imageTint",
     "advancedNeonPhosphorBleed",
     "flicker",
     "chromaticAberration",
@@ -3615,7 +3661,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     },
     digital: {
       toggleId: "digitalEffectsEnabled",
-      controlIds: ["noise", "advancedFrameStutter", "advancedRfInterference", "advancedCctvMonochrome", "advancedSaturation", "advancedQuantization", "advancedGenerationLoss", "advancedMacroBlocking"],
+      controlIds: ["noise", "advancedFrameStutter", "advancedRfInterference", "advancedCctvMonochrome", "advancedQuantization", "advancedGenerationLoss", "advancedMacroBlocking"],
     },
     film: {
       toggleId: "filmEffectsEnabled",
@@ -3839,7 +3885,12 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     advancedTapeCrease: "Tape crease events",
     advancedTimestampOSD: "Timestamp intensity",
     advancedCctvMonochrome: "CCTV monochrome",
+    imageBrightness: "Brightness",
+    imageContrast: "Contrast",
     advancedSaturation: "Saturation",
+    imageGamma: "Gamma",
+    imageTemperature: "Temperature",
+    imageTint: "Tint",
     advancedQuantization: "Quantization/crush",
     advancedGenerationLoss: "Generation loss",
     advancedMacroBlocking: "Macroblocking",

@@ -491,6 +491,7 @@ input[type="range"]::-moz-range-thumb {
 .jump-list button:nth-child(6)::before { content: "▦"; }
 .jump-list button:nth-child(7)::before { content: "⏱"; }
 .jump-list button:nth-child(8)::before { content: "▣"; }
+.jump-list button:nth-child(9)::before { content: "◍"; }
 
 .advanced-disclosure {
   border: 1px solid #344458;
