@@ -277,7 +277,7 @@ export const PRESETS = {
     advancedQuantization: 0,
     advancedGenerationLoss: 0,
     advancedMacroBlocking: 0,
-    maskType: "none",
+    maskType: "phosphor",
   },
   "Early Web Rip (2006)": {
     scanlineStrength: 0,
@@ -846,11 +846,11 @@ export const PRESETS = {
     advancedQuantization: 0.2,
     advancedGenerationLoss: 0.05,
     advancedMacroBlocking: 0.14,
-    maskType: "none",
+    maskType: "cmosRollingColumn",
   },
   "DSLR Video 2010": {
     scanlineStrength: 0.03,
-    phosphorMask: 0.04,
+    phosphorMask: 0.06,
     barrelDistortion: -0.008,
     bloom: 0.12,
     flicker: 0.02,
@@ -878,7 +878,7 @@ export const PRESETS = {
     advancedQuantization: 0.04,
     advancedGenerationLoss: 0,
     advancedMacroBlocking: 0.05,
-    maskType: "none",
+    maskType: "cmosRollingColumn",
   },
   "Early Smartphone 2012": {
     scanlineStrength: 0,
@@ -978,7 +978,7 @@ export const PRESETS = {
   },
   "Video CD Capture (1999)": {
     scanlineStrength: 0.03,
-    phosphorMask: 0.02,
+    phosphorMask: 0.18,
     barrelDistortion: 0,
     bloom: 0.07,
     flicker: 0,
@@ -1006,7 +1006,7 @@ export const PRESETS = {
     advancedQuantization: 0.39,
     advancedGenerationLoss: 0.17,
     advancedMacroBlocking: 0.36,
-    maskType: "none",
+    maskType: "lowBitrateBlockGrid",
   },
   "CRT PC Monitor (1995)": {
     scanlineStrength: 0.22,
@@ -1106,7 +1106,7 @@ export const PRESETS = {
   },
   "Polaroid SX-70 Instant": {
     scanlineStrength: 0,
-    phosphorMask: 0,
+    phosphorMask: 0.24,
     barrelDistortion: -0.018,
     bloom: 0.28,
     flicker: 0.03,
@@ -1144,7 +1144,7 @@ export const PRESETS = {
   },
   "Disposable Camera 35mm Flash": {
     scanlineStrength: 0,
-    phosphorMask: 0,
+    phosphorMask: 0.18,
     barrelDistortion: -0.024,
     bloom: 0.34,
     flicker: 0,
@@ -1220,7 +1220,7 @@ export const PRESETS = {
   },
   "Night Vision Camcorder": {
     scanlineStrength: 0,
-    phosphorMask: 0,
+    phosphorMask: 0.34,
     barrelDistortion: 0,
     bloom: 0.12,
     flicker: 0,
@@ -1253,7 +1253,7 @@ export const PRESETS = {
   },
   "Police Bodycam 2016": {
     scanlineStrength: 0,
-    phosphorMask: 0,
+    phosphorMask: 0.22,
     barrelDistortion: -0.075,
     bloom: 0.08,
     flicker: 0,
@@ -1285,7 +1285,7 @@ export const PRESETS = {
   },
   "Covert Spycam Button Lens": {
     scanlineStrength: 0,
-    phosphorMask: 0,
+    phosphorMask: 0.28,
     barrelDistortion: -0.118,
     bloom: 0.05,
     flicker: 0,
@@ -1317,7 +1317,7 @@ export const PRESETS = {
   },
   "Ring Doorbell Daytime": {
     scanlineStrength: 0,
-    phosphorMask: 0,
+    phosphorMask: 0.16,
     barrelDistortion: -0.092,
     bloom: 0.06,
     flicker: 0,
@@ -1349,7 +1349,7 @@ export const PRESETS = {
   },
   "Ring Doorbell Night IR": {
     scanlineStrength: 0,
-    phosphorMask: 0,
+    phosphorMask: 0.3,
     barrelDistortion: -0.094,
     bloom: 0.1,
     flicker: 0,
@@ -1382,7 +1382,7 @@ export const PRESETS = {
   },
   "GoPro Hero3 Action Cam": {
     scanlineStrength: 0,
-    phosphorMask: 0,
+    phosphorMask: 0.18,
     barrelDistortion: -0.132,
     bloom: 0.14,
     flicker: 0,
@@ -1448,7 +1448,7 @@ export const PRESETS = {
   },
   "ATSC Broadcast Transition (2009)": {
     scanlineStrength: 0.11,
-    phosphorMask: 0.07,
+    phosphorMask: 0.14,
     barrelDistortion: -0.008,
     bloom: 0.14,
     flicker: 0.02,
@@ -1476,6 +1476,6 @@ export const PRESETS = {
     advancedQuantization: 0.27,
     advancedGenerationLoss: 0.04,
     advancedMacroBlocking: 0.22,
-    maskType: "none",
+    maskType: "lowBitrateBlockGrid",
   },
 };
