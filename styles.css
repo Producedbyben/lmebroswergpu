@@ -121,13 +121,6 @@ h1 { margin: 0; font-size: 1.08rem; letter-spacing: 0.015em; color: #f6f8fd; }
   background: linear-gradient(180deg, #2a3a52 0%, #213249 100%);
 }
 
-
-.app-shortcut-hint {
-  margin: 0;
-  font-size: 0.66rem;
-  color: #93a9c7;
-}
-
 .workspace-intro {
   margin: 0;
   font-size: 0.7rem;
