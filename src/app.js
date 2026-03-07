@@ -3490,6 +3490,8 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   const presetFilterMeta = document.getElementById("presetFilterMeta");
   const exportEstimateEl = document.getElementById("exportEstimate");
   const densityModeRoot = document.getElementById("densityMode");
+  const undoLookBtn = document.getElementById("undoLookBtn");
+  const redoLookBtn = document.getElementById("redoLookBtn");
   const debugRenderDiagnostics = /[?&]debugRender=1/.test(window.location.search);
   const diagnostics = new RenderDiagnostics(debugRenderDiagnostics);
   const diagnosticsEl = document.createElement("div");
@@ -3596,6 +3598,10 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   const presetCategories = new Map();
   const detachedMacroIds = new Set();
   const presetPinnedIds = new Set();
+  const lookHistory = [];
+  let lookHistoryIndex = -1;
+  let isApplyingLookHistory = false;
+  const MAX_LOOK_HISTORY = 80;
   const PARAM_POLICY_STORAGE_KEY = "lme:param-policy:v1";
   const EFFECT_PANEL_CONFIGS = {
     masks: {
@@ -4372,6 +4378,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     }
     markPreviewDirty();
     progressEl.value = 0;
+    commitLookHistorySnapshot();
   }
 
   function resetMacroControls() {
@@ -4383,6 +4390,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     }
     markPreviewDirty();
     progressEl.value = 0;
+    commitLookHistorySnapshot();
   }
 
 
@@ -4410,6 +4418,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     progressEl.value = 0;
     setStatus("Parameters reset to defaults.", "success");
     updatePresetDirtyState();
+    commitLookHistorySnapshot();
   }
 
   function resetSingleControlToDefault(id) {
@@ -4552,6 +4561,96 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     }
     values.maskType = maskTypeControl?.getValue() || "phosphor";
     return values;
+  }
+
+  function captureLookState() {
+    return {
+      controls: Object.fromEntries(controlIds.map((id) => [id, Number(document.getElementById(id)?.value || 0)])),
+      macros: Object.fromEntries(macroControlIds.map((id) => [id, Number(document.getElementById(id)?.value || 0)])),
+      maskType: maskTypeControl?.getValue() || "phosphor",
+      presetIntensity: Number(presetIntensityInput?.value || 1),
+    };
+  }
+
+  function areLookStatesEqual(left, right) {
+    if (!left || !right) return false;
+    if ((left.maskType || "phosphor") !== (right.maskType || "phosphor")) return false;
+    if (Math.abs(Number(left.presetIntensity || 1) - Number(right.presetIntensity || 1)) > 0.0001) return false;
+    for (const id of controlIds) {
+      if (Math.abs(Number(left.controls?.[id] || 0) - Number(right.controls?.[id] || 0)) > 0.0001) return false;
+    }
+    for (const id of macroControlIds) {
+      if (Math.abs(Number(left.macros?.[id] || 0) - Number(right.macros?.[id] || 0)) > 0.0001) return false;
+    }
+    return true;
+  }
+
+  function updateLookHistoryButtons() {
+    if (undoLookBtn) undoLookBtn.disabled = lookHistoryIndex <= 0;
+    if (redoLookBtn) redoLookBtn.disabled = lookHistoryIndex >= (lookHistory.length - 1);
+  }
+
+  function commitLookHistorySnapshot() {
+    if (isApplyingLookHistory) return;
+    const snapshot = captureLookState();
+    const active = lookHistory[lookHistoryIndex];
+    if (areLookStatesEqual(snapshot, active)) {
+      updateLookHistoryButtons();
+      return;
+    }
+
+    if (lookHistoryIndex < lookHistory.length - 1) {
+      lookHistory.splice(lookHistoryIndex + 1);
+    }
+
+    lookHistory.push(snapshot);
+    if (lookHistory.length > MAX_LOOK_HISTORY) {
+      lookHistory.shift();
+    }
+    lookHistoryIndex = lookHistory.length - 1;
+    updateLookHistoryButtons();
+  }
+
+  function applyLookState(snapshot) {
+    if (!snapshot) return;
+    isApplyingLookHistory = true;
+    for (const id of controlIds) {
+      if (typeof snapshot.controls?.[id] === "number") {
+        setControlValue(id, snapshot.controls[id], { dispatch: false });
+      }
+    }
+    for (const id of macroControlIds) {
+      if (typeof snapshot.macros?.[id] === "number") {
+        setControlValue(id, snapshot.macros[id], { dispatch: false });
+      }
+    }
+    if (typeof snapshot.presetIntensity === "number" && presetIntensityInput) {
+      presetIntensityInput.value = String(snapshot.presetIntensity);
+      presetIntensityInput.__syncRangeNumber?.();
+    }
+    if (typeof snapshot.maskType === "string" && maskTypeControl) {
+      maskTypeControl.setValue(snapshot.maskType, { silent: true });
+    }
+    isApplyingLookHistory = false;
+    updatePresetDirtyState();
+    markPreviewDirty();
+    progressEl.value = 0;
+  }
+
+  function undoLookChange() {
+    if (lookHistoryIndex <= 0) return;
+    lookHistoryIndex -= 1;
+    applyLookState(lookHistory[lookHistoryIndex]);
+    updateLookHistoryButtons();
+    setStatus("Undid look change.", "info");
+  }
+
+  function redoLookChange() {
+    if (lookHistoryIndex >= lookHistory.length - 1) return;
+    lookHistoryIndex += 1;
+    applyLookState(lookHistory[lookHistoryIndex]);
+    updateLookHistoryButtons();
+    setStatus("Redid look change.", "info");
   }
 
   function interpolatePresetValues(name, intensity = 1) {
@@ -4769,6 +4868,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
         markPreviewDirty();
         progressEl.value = 0;
         setStatus(`Preset applied: ${name}`, "success");
+        commitLookHistorySnapshot();
       },
     });
 
@@ -5195,6 +5295,14 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     clearLoadedSource();
   });
 
+  undoLookBtn?.addEventListener("click", () => {
+    undoLookChange();
+  });
+
+  redoLookBtn?.addEventListener("click", () => {
+    redoLookChange();
+  });
+
   for (const id of [...controlIds, ...macroControlIds, "fps", "duration", "presetIntensity"]) {
     document.getElementById(id).addEventListener("input", () => {
       markPreviewDirty();
@@ -5287,6 +5395,12 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     });
   }
 
+  for (const id of [...controlIds, ...macroControlIds, "presetIntensity"]) {
+    document.getElementById(id)?.addEventListener("change", () => {
+      commitLookHistorySnapshot();
+    });
+  }
+
   previewModeControl = setupSelectionBox("previewMode", {
     onChange: () => {
       if (isStillPreviewMode()) {
@@ -5331,6 +5445,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
       markPreviewDirty();
       progressEl.value = 0;
       updatePresetDirtyState();
+      commitLookHistorySnapshot();
     },
   });
 
@@ -5497,6 +5612,18 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   });
 
   window.addEventListener("keydown", (event) => {
+    const isUndo = (event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === "z" && !event.shiftKey;
+    const isRedo = (event.ctrlKey || event.metaKey) && !event.altKey && (
+      (event.key.toLowerCase() === "z" && event.shiftKey) ||
+      (event.key.toLowerCase() === "y" && !event.shiftKey)
+    );
+    if ((isUndo || isRedo) && !isTypingContext(event.target)) {
+      event.preventDefault();
+      if (isUndo) undoLookChange();
+      if (isRedo) redoLookChange();
+      return;
+    }
+
     if (event.code !== "Space" || event.repeat || compareLocked || isTypingContext(event.target)) return;
     setCompareState(true, { lock: false });
     event.preventDefault();
@@ -5521,6 +5648,8 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   loadPresets().finally(() => {
     initializePresets();
     defaultParamValues = readParams();
+    commitLookHistorySnapshot();
+    updateLookHistoryButtons();
     updatePreviewControlsState();
     updateExportControlsState();
     syncPreviewTimeControl();

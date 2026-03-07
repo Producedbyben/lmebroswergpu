@@ -292,6 +292,18 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
   background: #212933;
 }
 
+
+.history-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.32rem;
+}
+
+.history-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .export-actions #exportBtn {
   background: #2f5e97;
   border-color: #4f84c4;
