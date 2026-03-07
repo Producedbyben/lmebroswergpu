@@ -1804,6 +1804,8 @@ class CRTRenderer {
     const osdStyle = Math.max(0, Math.min(9, Math.round(Number(params.advancedOSDStyle) || 0)));
     const osdStartDate = Number.isFinite(Date.parse(renderOptions.osdStartDateTime || "")) ? new Date(renderOptions.osdStartDateTime) : new Date("1998-10-31T22:48:00");
     const osdCountWithExport = renderOptions.osdCountWithExport !== false;
+    const osdSyntheticDisclosureEnabled = renderOptions.osdSyntheticDisclosureEnabled !== false;
+    const osdSeed = Number.isFinite(Number(renderOptions.osdSeed)) ? Number(renderOptions.osdSeed) : 104729;
     const osdElapsedSeconds = osdCountWithExport ? Math.max(0, Number(renderOptions.osdElapsedSeconds ?? frameSeconds) || 0) : 0;
     const osdPrimaryColor = renderOptions.osdPrimaryColor || "#ffa84a";
     const osdAccentColor = renderOptions.osdAccentColor || "#ff3a3a";
@@ -2320,6 +2322,9 @@ class CRTRenderer {
       const stampIso = `${yyyy}-${mm}-${dd} ${hh}:${min}:${sec}`;
       const stampDigital = `${dd}-${mm}-${yyyy} ${hh}:${min}:${sec}`;
       const recBlink = seededNoise(Math.floor(temporalSeconds * 2), 0, 121) > 0.27;
+      const timecodeFps = Math.max(1, Math.min(120, Math.round(Number(fps) || 30)));
+      const frameCode = String(Math.min(timecodeFps - 1, Math.floor((temporalSeconds % 1) * timecodeFps))).padStart(2, "0");
+      const canonicalTimecode = `${hh}:${min}:${sec}:${frameCode}`;
       const noisePulse = seededNoise(temporalFrame, temporalSeconds * 0.5, 127);
       const flickerAlpha = 0.32 + noisePulse * 0.52;
       const osdAlpha = Math.min(0.92, timestampOSD * flickerAlpha);
@@ -2391,11 +2396,11 @@ class CRTRenderer {
       } else if (osdStyle === 3) {
         const lineHeight = Math.max(12, Math.floor(baseSize * 1.18));
         drawOsdLine(stampIso, padX, padY, osdPrimaryColor);
-        const camLabel = `CAM ${1 + Math.floor(seededNoise(7, temporalSeconds * 0.2, 149) * 8)}`;
+        const camLabel = `CAM ${1 + Math.floor(seededNoise(osdSeed, 0.2, 149) * 8)}`;
         drawOsdLine(camLabel, rightX - measureOsdWidth(camLabel), topY, osdPrimaryColor);
         const status = recBlink ? "LIVE" : "MOTION";
         drawOsdLine(status, padX, topY, osdPrimaryColor);
-        drawOsdLine(`GAIN ${Math.floor(8 + seededNoise(temporalFrame, 5, 151) * 16)}dB`, padX, topY + lineHeight, osdPrimaryColor);
+        drawOsdLine(`GAIN ${Math.floor(8 + seededNoise(osdSeed, temporalSeconds * 0.15, 151) * 16)}dB`, padX, topY + lineHeight, osdPrimaryColor);
       } else if (osdStyle === 4) {
         const shotNum = `${Math.max(1, Math.floor(seededNoise(temporalFrame, 0.4, 171) * 999))}`.padStart(3, "0");
         drawOsdLine(stampDigital, padX, padY, "rgb(239 247 255)");
@@ -2429,18 +2434,21 @@ class CRTRenderer {
         outCtx.restore();
       } else if (osdStyle === 6) {
         const tcSep = recBlink ? ":" : ";";
-        const policeTimecode = `${hh}${tcSep}${min}${tcSep}${sec}${tcSep}${String(Math.floor((temporalSeconds % 1) * 30)).padStart(2, "0")}`;
+        const policeTimecode = `${hh}${tcSep}${min}${tcSep}${sec}${tcSep}${frameCode}`;
         drawOsdLine(policeTimecode, padX, topY, "#f8f8f8");
         drawOsdLine(stampIso, padX, padY, "#f8f8f8");
-        const unitLabel = `UNIT ${100 + Math.floor(seededNoise(temporalFrame, 2.2, 177) * 900)}`;
+        const unitLabel = `UNIT ${100 + Math.floor(seededNoise(osdSeed, 2.2, 177) * 900)}`;
         drawOsdLine(unitLabel, rightX - measureOsdWidth(unitLabel), topY, "#f8f8f8");
       } else if (osdStyle === 7 || osdStyle === 9) {
         const tokenMap = {
           "{date}": stampClassic.split(" ")[0],
           "{time}": `${hh}:${min}:${sec}`,
           "{datetime}": stampClassic,
+          "{tc}": canonicalTimecode,
+          "{frame}": String(Math.floor(temporalSeconds * timecodeFps)).padStart(6, "0"),
+          "{fps}": String(timecodeFps),
         };
-        const expandLabelTokens = (value) => String(value || "").replace(/\{date\}|\{time\}|\{datetime\}/gi, (token) => tokenMap[token.toLowerCase()] || token);
+        const expandLabelTokens = (value) => String(value || "").replace(/\{date\}|\{time\}|\{datetime\}|\{tc\}|\{frame\}|\{fps\}/gi, (token) => tokenMap[token.toLowerCase()] || token);
         const drawCorner = (corner, fallbackText, x, y, align = "left") => {
           const cfg = osdCornerConfig[corner];
           if (!cfg?.enabled) return;
@@ -2454,7 +2462,7 @@ class CRTRenderer {
             drawOsdLine(line, drawX, y + index * lineHeight, "#f5f5f5");
           });
         };
-        drawCorner("topLeft", `CAM${1 + Math.floor(seededNoise(temporalSeconds, 2, 179) * 4)}`, padX, topY, "left");
+        drawCorner("topLeft", `CAM${1 + Math.floor(seededNoise(osdSeed, 2, 179) * 4)}`, padX, topY, "left");
         drawCorner("topCenter", "", Math.floor(width * 0.5), topY, "center");
         drawCorner("topRight", "CTFID\nCHANNEL3", rightX, topY, "right");
         drawCorner("bottomLeft", "", padX, padY, "left");
@@ -2462,7 +2470,7 @@ class CRTRenderer {
         drawCorner("bottomRight", "", rightX, padY, "right");
 
         if (osdStyle === 7) {
-          const dropFrame = `${hh}:${min}:${sec}:${String(Math.floor((temporalSeconds % 1) * 30)).padStart(2, "0")}`;
+          const dropFrame = canonicalTimecode;
           const tcWidth = measureOsdWidth(dropFrame);
           const tcX = Math.floor((width - tcWidth) * 0.5);
           const tcBaseline = Math.floor(height * 0.95);
@@ -2485,6 +2493,25 @@ class CRTRenderer {
         drawOsdLine(`H.265 ${Math.floor(1 + seededNoise(temporalFrame, 6, 181) * 3)}.0Mbps`, padX, topY + lineHeight, osdPrimaryColor);
       }
 
+      outCtx.restore();
+    }
+
+    if (osdSyntheticDisclosureEnabled) {
+      const watermarkSize = Math.max(11, Math.floor(height * 0.018));
+      const watermarkPadX = Math.max(8, Math.floor(width * 0.012));
+      const watermarkPadY = Math.max(8, Math.floor(height * 0.012));
+      const watermarkText = "SIMULATED FOOTAGE";
+
+      outCtx.save();
+      outCtx.font = `600 ${watermarkSize}px "Inter", "Segoe UI", "Arial", sans-serif`;
+      outCtx.textBaseline = "bottom";
+      const wmWidth = outCtx.measureText(watermarkText).width;
+      const wmX = width - watermarkPadX - wmWidth;
+      const wmY = height - watermarkPadY;
+      outCtx.fillStyle = "rgb(0 0 0 / 0.48)";
+      outCtx.fillRect(wmX - 6, wmY - watermarkSize - 3, wmWidth + 12, watermarkSize + 7);
+      outCtx.fillStyle = "rgb(255 255 255 / 0.94)";
+      outCtx.fillText(watermarkText, wmX, wmY);
       outCtx.restore();
     }
 
@@ -3172,6 +3199,9 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   const presetSelect = document.getElementById("presetSelect");
   const osdStartDateTimeInput = document.getElementById("osdStartDateTime");
   const osdCountWithExportInput = document.getElementById("osdCountWithExport");
+  const osdSyntheticDisclosureEnabledInput = document.getElementById("osdSyntheticDisclosureEnabled");
+  const osdSeedInput = document.getElementById("osdSeed");
+  const rerollOsdSeedBtn = document.getElementById("rerollOsdSeedBtn");
   const osdPrimaryColorInput = document.getElementById("osdPrimaryColor");
   const osdAccentColorInput = document.getElementById("osdAccentColor");
   const osdBloomInput = document.getElementById("osdBloom");
@@ -3207,6 +3237,10 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     diagnosticsEl.textContent = `Renderer: ${renderer.getName()} (collecting...)`;
     document.body.appendChild(diagnosticsEl);
     console.info("[render diagnostics] enabled", { renderer: renderer.getName() });
+  }
+
+  if (osdSeedInput && !(Number(osdSeedInput.value) > 0)) {
+    osdSeedInput.value = String(100000 + Math.floor(Math.random() * 900000));
   }
 
   const controlIds = [
@@ -4301,6 +4335,8 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
       osdThickness: Number(osdThicknessInput?.value || 1),
       osdFontPreset: osdFontPresetControl?.getValue() || "vhs",
       osdCountWithExport: osdCountWithExportInput?.checked !== false,
+      osdSyntheticDisclosureEnabled: osdSyntheticDisclosureEnabledInput?.checked !== false,
+      osdSeed: Number(osdSeedInput?.value || 104729),
       osdElapsedSeconds: elapsedSeconds,
       osdCornerTopLeftEnabled: osdCornerTopLeftEnabledInput?.checked !== false,
       osdCornerTopCenterEnabled: osdCornerTopCenterEnabledInput?.checked === true,
@@ -4935,12 +4971,18 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     });
   });
 
-  for (const id of ["osdStartDateTime", "osdPrimaryColor", "osdAccentColor", "osdBloom", "osdFontScale", "osdThickness", "osdCountWithExport", "osdCornerTopLeftEnabled", "osdCornerTopCenterEnabled", "osdCornerTopRightEnabled", "osdCornerBottomLeftEnabled", "osdCornerBottomCenterEnabled", "osdCornerBottomRightEnabled", "osdCornerTopLeftText", "osdCornerTopCenterText", "osdCornerTopRightText", "osdCornerBottomLeftText", "osdCornerBottomCenterText", "osdCornerBottomRightText"]) {
+  for (const id of ["osdStartDateTime", "osdPrimaryColor", "osdAccentColor", "osdBloom", "osdFontScale", "osdThickness", "osdCountWithExport", "osdSyntheticDisclosureEnabled", "osdSeed", "osdCornerTopLeftEnabled", "osdCornerTopCenterEnabled", "osdCornerTopRightEnabled", "osdCornerBottomLeftEnabled", "osdCornerBottomCenterEnabled", "osdCornerBottomRightEnabled", "osdCornerTopLeftText", "osdCornerTopCenterText", "osdCornerTopRightText", "osdCornerBottomLeftText", "osdCornerBottomCenterText", "osdCornerBottomRightText"]) {
     document.getElementById(id)?.addEventListener("input", () => {
       markPreviewDirty();
       progressEl.value = 0;
     });
   }
+
+  rerollOsdSeedBtn?.addEventListener("click", () => {
+    if (osdSeedInput) osdSeedInput.value = String(100000 + Math.floor(Math.random() * 900000));
+    markPreviewDirty();
+    progressEl.value = 0;
+  });
 
   for (const id of [...controlIds, ...macroControlIds, "previewTime", "presetIntensity", "quickPresetIntensity", "quickScanlineStrength", "quickBloom", "quickChroma", "osdBloom", "osdFontScale", "osdThickness"]) {
     setupRangeWithNumber(id);
