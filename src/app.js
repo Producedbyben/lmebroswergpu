@@ -2833,6 +2833,13 @@ class WebGL2RendererAdapter extends LegacyRendererAdapter {
 function createRendererAdapter() {
   const search = new URLSearchParams(window.location.search);
   const forceRenderer = (search.get("renderer") || "").toLowerCase();
+  // Keep legacy as the default renderer path for stability.
+  // GPU/offscreen adapters are opt-in via `?renderer=` for controlled testing.
+  if (!forceRenderer) return new LegacyRendererAdapter();
+  return createRendererAdapterAutomatic(forceRenderer);
+}
+
+function createRendererAdapterAutomatic(forceRenderer = "") {
   const forceMatch = forceRenderer ? new Set([forceRenderer]) : null;
   const candidates = [
     { name: "webgpu", test: () => WebGPURendererAdapter.isSupported(), create: () => new WebGPURendererAdapter() },
@@ -2850,26 +2857,7 @@ function createRendererAdapter() {
     }
   }
   if (forceMatch) {
-    console.warn("Requested renderer was unavailable; falling back to automatic selection.", { forceRenderer });
-    return createRendererAdapterAutomatic();
-  }
-  return new LegacyRendererAdapter();
-}
-
-function createRendererAdapterAutomatic() {
-  const candidates = [
-    { name: "webgpu", test: () => WebGPURendererAdapter.isSupported(), create: () => new WebGPURendererAdapter() },
-    { name: "webgl2", test: () => WebGL2RendererAdapter.isSupported(), create: () => new WebGL2RendererAdapter() },
-    { name: "offscreen", test: () => OffscreenCanvasRendererAdapter.isSupported(), create: () => new OffscreenCanvasRendererAdapter() },
-    { name: "legacy", test: () => true, create: () => new LegacyRendererAdapter() },
-  ];
-  for (const candidate of candidates) {
-    if (!candidate.test()) continue;
-    try {
-      return candidate.create();
-    } catch (error) {
-      console.warn(`Renderer init failed for ${candidate.name}, falling back.`, error);
-    }
+    console.warn("Requested renderer was unavailable; falling back to legacy.", { forceRenderer });
   }
   return new LegacyRendererAdapter();
 }
