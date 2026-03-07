@@ -1804,7 +1804,6 @@ class CRTRenderer {
     const osdStyle = Math.max(0, Math.min(9, Math.round(Number(params.advancedOSDStyle) || 0)));
     const osdStartDate = Number.isFinite(Date.parse(renderOptions.osdStartDateTime || "")) ? new Date(renderOptions.osdStartDateTime) : new Date("1998-10-31T22:48:00");
     const osdCountWithExport = renderOptions.osdCountWithExport !== false;
-    const osdSyntheticDisclosureEnabled = renderOptions.osdSyntheticDisclosureEnabled !== false;
     const osdSeed = Number.isFinite(Number(renderOptions.osdSeed)) ? Number(renderOptions.osdSeed) : 104729;
     const osdElapsedSeconds = osdCountWithExport ? Math.max(0, Number(renderOptions.osdElapsedSeconds ?? frameSeconds) || 0) : 0;
     const osdPrimaryColor = renderOptions.osdPrimaryColor || "#ffa84a";
@@ -2493,25 +2492,6 @@ class CRTRenderer {
         drawOsdLine(`H.265 ${Math.floor(1 + seededNoise(temporalFrame, 6, 181) * 3)}.0Mbps`, padX, topY + lineHeight, osdPrimaryColor);
       }
 
-      outCtx.restore();
-    }
-
-    if (osdSyntheticDisclosureEnabled) {
-      const watermarkSize = Math.max(11, Math.floor(height * 0.018));
-      const watermarkPadX = Math.max(8, Math.floor(width * 0.012));
-      const watermarkPadY = Math.max(8, Math.floor(height * 0.012));
-      const watermarkText = "SIMULATED FOOTAGE";
-
-      outCtx.save();
-      outCtx.font = `600 ${watermarkSize}px "Inter", "Segoe UI", "Arial", sans-serif`;
-      outCtx.textBaseline = "bottom";
-      const wmWidth = outCtx.measureText(watermarkText).width;
-      const wmX = width - watermarkPadX - wmWidth;
-      const wmY = height - watermarkPadY;
-      outCtx.fillStyle = "rgb(0 0 0 / 0.48)";
-      outCtx.fillRect(wmX - 6, wmY - watermarkSize - 3, wmWidth + 12, watermarkSize + 7);
-      outCtx.fillStyle = "rgb(255 255 255 / 0.94)";
-      outCtx.fillText(watermarkText, wmX, wmY);
       outCtx.restore();
     }
 
