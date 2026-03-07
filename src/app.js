@@ -1501,12 +1501,25 @@ class CRTRenderer {
     this.workCanvas = document.createElement("canvas");
     this.tempCanvas = document.createElement("canvas");
     this.quantCanvas = document.createElement("canvas");
+    this.sourceCtx = this.sourceCanvas.getContext("2d");
+    this.fitCtx = this.fitCanvas.getContext("2d", { willReadFrequently: true });
+    this.workCtx = this.workCanvas.getContext("2d", { willReadFrequently: true });
+    this.tempCtx = this.tempCanvas.getContext("2d");
+    this.quantCtx = this.quantCanvas.getContext("2d", { willReadFrequently: true });
+    this.cachedOutImageData = null;
+    this.cachedOutImageWidth = 0;
+    this.cachedOutImageHeight = 0;
     this.hasImage = false;
     this.osdPixelFontPresets = {
       hdzeroDefault: { stroke: 1, spacing: 1, heightCells: 7, widthCells: 5 },
       hdzeroConthrax: { stroke: 1.15, spacing: 1, heightCells: 7, widthCells: 5 },
       hdzeroVision: { stroke: 1, spacing: 2, heightCells: 7, widthCells: 5 },
     };
+  }
+
+  ensureCanvasSize(canvas, width, height) {
+    if (canvas.width !== width) canvas.width = width;
+    if (canvas.height !== height) canvas.height = height;
   }
 
   getOSDPixelGlyph(char = " ") {
@@ -1687,13 +1700,11 @@ class CRTRenderer {
     const inputWidth = img.naturalWidth || img.videoWidth || img.width;
     const inputHeight = img.naturalHeight || img.videoHeight || img.height;
     const scale = Math.max(0.1, Math.min(1, sourceScale || 1));
-    this.sourceCanvas.width = Math.max(1, Math.round(inputWidth * scale));
-    this.sourceCanvas.height = Math.max(1, Math.round(inputHeight * scale));
-    const ctx = this.sourceCanvas.getContext("2d");
-    ctx.clearRect(0, 0, this.sourceCanvas.width, this.sourceCanvas.height);
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "high";
-    ctx.drawImage(img, 0, 0, inputWidth, inputHeight, 0, 0, this.sourceCanvas.width, this.sourceCanvas.height);
+    this.ensureCanvasSize(this.sourceCanvas, Math.max(1, Math.round(inputWidth * scale)), Math.max(1, Math.round(inputHeight * scale)));
+    this.sourceCtx.clearRect(0, 0, this.sourceCanvas.width, this.sourceCanvas.height);
+    this.sourceCtx.imageSmoothingEnabled = true;
+    this.sourceCtx.imageSmoothingQuality = "high";
+    this.sourceCtx.drawImage(img, 0, 0, inputWidth, inputHeight, 0, 0, this.sourceCanvas.width, this.sourceCanvas.height);
     this.hasImage = true;
   }
 
@@ -1723,9 +1734,8 @@ class CRTRenderer {
     outCtx.fillRect(0, 0, width, height);
     if (!this.hasImage) return;
 
-    this.fitCanvas.width = width;
-    this.fitCanvas.height = height;
-    const fitCtx = this.fitCanvas.getContext("2d", { willReadFrequently: true });
+    this.ensureCanvasSize(this.fitCanvas, width, height);
+    const fitCtx = this.fitCtx;
     fitCtx.clearRect(0, 0, width, height);
     fitCtx.imageSmoothingEnabled = true;
     fitCtx.imageSmoothingQuality = "high";
@@ -1748,11 +1758,15 @@ class CRTRenderer {
 
     fitCtx.drawImage(src, sx, sy, sw, sh, 0, 0, width, height);
 
-    this.workCanvas.width = width;
-    this.workCanvas.height = height;
-    const wctx = this.workCanvas.getContext("2d", { willReadFrequently: true });
+    this.ensureCanvasSize(this.workCanvas, width, height);
+    const wctx = this.workCtx;
     const srcPixels = fitCtx.getImageData(0, 0, width, height);
-    const outPixels = wctx.createImageData(width, height);
+    if (!this.cachedOutImageData || this.cachedOutImageWidth !== width || this.cachedOutImageHeight !== height) {
+      this.cachedOutImageData = wctx.createImageData(width, height);
+      this.cachedOutImageWidth = width;
+      this.cachedOutImageHeight = height;
+    }
+    const outPixels = this.cachedOutImageData;
     const srcData = srcPixels.data;
     const dstData = outPixels.data;
 
@@ -2239,9 +2253,8 @@ class CRTRenderer {
       const lowW = Math.max(1, Math.floor(width / blockSize));
       const lowH = Math.max(1, Math.floor(height / blockSize));
 
-      if (this.tempCanvas.width !== lowW) this.tempCanvas.width = lowW;
-      if (this.tempCanvas.height !== lowH) this.tempCanvas.height = lowH;
-      const tctx = this.tempCanvas.getContext("2d");
+      this.ensureCanvasSize(this.tempCanvas, lowW, lowH);
+      const tctx = this.tempCtx;
       tctx.imageSmoothingEnabled = true;
       tctx.imageSmoothingQuality = "low";
       tctx.drawImage(outCtx.canvas, 0, 0, lowW, lowH);
@@ -2268,9 +2281,8 @@ class CRTRenderer {
       const sampleScale = Math.max(1, Math.round(1 + quantization * (2 + (1 - perfBudget) * 4)));
       const qW = Math.max(1, Math.floor(width / sampleScale));
       const qH = Math.max(1, Math.floor(height / sampleScale));
-      if (this.quantCanvas.width !== qW) this.quantCanvas.width = qW;
-      if (this.quantCanvas.height !== qH) this.quantCanvas.height = qH;
-      const qctx = this.quantCanvas.getContext("2d", { willReadFrequently: true });
+      this.ensureCanvasSize(this.quantCanvas, qW, qH);
+      const qctx = this.quantCtx;
       qctx.clearRect(0, 0, qW, qH);
       qctx.imageSmoothingEnabled = true;
       qctx.imageSmoothingQuality = "low";
@@ -2484,6 +2496,376 @@ class CRTRenderer {
       outCtx.restore();
     }
   }
+}
+
+class RenderDiagnostics {
+  constructor(enabled = false) {
+    this.enabled = enabled;
+    this.data = {
+      frameMs: 0,
+      uploadMs: 0,
+      presentMs: 0,
+      latencyMs: 0,
+      droppedFrames: 0,
+      mainThreadBlockedMs: 0,
+    };
+    this.samples = 0;
+    this.lastNow = 0;
+    this.lastExpected = 0;
+  }
+
+  beginFrame(now, expectedIntervalMs) {
+    if (!this.enabled) return;
+    if (this.lastNow > 0) {
+      const delta = now - this.lastNow;
+      const overrun = Math.max(0, delta - expectedIntervalMs * 1.5);
+      this.data.mainThreadBlockedMs += overrun;
+      if (delta > expectedIntervalMs * 1.7) this.data.droppedFrames += Math.floor(delta / expectedIntervalMs) - 1;
+    }
+    this.lastNow = now;
+  }
+
+  commit(metrics) {
+    if (!this.enabled) return;
+    this.samples += 1;
+    this.data.frameMs += metrics.frameMs;
+    this.data.uploadMs += metrics.uploadMs;
+    this.data.presentMs += metrics.presentMs;
+    this.data.latencyMs += metrics.latencyMs;
+  }
+
+  snapshot(rendererName) {
+    if (!this.enabled || this.samples < 1) return null;
+    const div = this.samples;
+    return {
+      renderer: rendererName,
+      frameMs: this.data.frameMs / div,
+      uploadMs: this.data.uploadMs / div,
+      presentMs: this.data.presentMs / div,
+      latencyMs: this.data.latencyMs / div,
+      droppedFrames: this.data.droppedFrames,
+      mainThreadBlockedMs: this.data.mainThreadBlockedMs,
+      samples: this.samples,
+    };
+  }
+}
+
+class LegacyRendererAdapter {
+  constructor() {
+    this.legacy = new CRTRenderer();
+  }
+
+  get hasImage() {
+    return this.legacy.hasImage;
+  }
+
+  set hasImage(value) {
+    this.legacy.hasImage = value;
+  }
+
+  setImage(...args) {
+    this.legacy.setImage(...args);
+  }
+
+  render(...args) {
+    this.legacy.render(...args);
+    return { uploadMs: 0, presentMs: 0 };
+  }
+
+  getName() {
+    return "legacy";
+  }
+}
+
+
+
+class OffscreenCanvasRendererAdapter extends LegacyRendererAdapter {
+  static isSupported() {
+    return typeof OffscreenCanvas !== "undefined";
+  }
+
+  constructor() {
+    super();
+    this.offscreen = new OffscreenCanvas(1, 1);
+    this.offscreenCtx = this.offscreen.getContext("2d", { alpha: false, desynchronized: true });
+  }
+
+  render(outCtx, width, height, seconds, params, frameIndex, fps, renderOptions) {
+    if (this.offscreen.width !== width) this.offscreen.width = width;
+    if (this.offscreen.height !== height) this.offscreen.height = height;
+    this.legacy.render(this.offscreenCtx, width, height, seconds, params, frameIndex, fps, renderOptions);
+    outCtx.clearRect(0, 0, width, height);
+    outCtx.drawImage(this.offscreen, 0, 0, width, height);
+    return { uploadMs: 0, presentMs: 0 };
+  }
+
+  getName() {
+    return "offscreen";
+  }
+}
+
+class WebGPURendererAdapter extends LegacyRendererAdapter {
+  static isSupported() {
+    return typeof navigator !== "undefined" && Boolean(navigator.gpu);
+  }
+
+  constructor() {
+    super();
+    this.gpuCanvas = document.createElement("canvas");
+    this.gpuCtx = this.gpuCanvas.getContext("webgpu");
+    if (!this.gpuCtx || !navigator.gpu) throw new Error("WebGPU unavailable");
+    this.intermediateCanvas = document.createElement("canvas");
+    this.intermediateCtx = this.intermediateCanvas.getContext("2d", { alpha: false, desynchronized: true });
+    this.device = null;
+    this.pipeline = null;
+    this.sampler = null;
+    this.texture = null;
+    this.bindGroup = null;
+    this.format = navigator.gpu.getPreferredCanvasFormat();
+    this.failed = false;
+    this.ready = false;
+    this.lastWidth = 0;
+    this.lastHeight = 0;
+    this.initPromise = this.init();
+  }
+
+  async init() {
+    try {
+      const adapter = await navigator.gpu.requestAdapter();
+      if (!adapter) throw new Error("No GPU adapter");
+      this.device = await adapter.requestDevice();
+      this.device.lost.then(() => {
+        this.failed = true;
+      }).catch(() => {
+        this.failed = true;
+      });
+      this.gpuCtx.configure({ device: this.device, format: this.format, alphaMode: "opaque" });
+      this.sampler = this.device.createSampler({ magFilter: "linear", minFilter: "linear" });
+      const module = this.device.createShaderModule({
+        code: `
+          struct VSOut { @builtin(position) pos: vec4f, @location(0) uv: vec2f };
+          @vertex fn vs(@builtin(vertex_index) idx: u32) -> VSOut {
+            var pos = array<vec2f,4>(vec2f(-1.0,-1.0), vec2f(1.0,-1.0), vec2f(-1.0,1.0), vec2f(1.0,1.0));
+            var uvv = array<vec2f,4>(vec2f(0.0,1.0), vec2f(1.0,1.0), vec2f(0.0,0.0), vec2f(1.0,0.0));
+            var out: VSOut;
+            out.pos = vec4f(pos[idx], 0.0, 1.0);
+            out.uv = uvv[idx];
+            return out;
+          }
+          @group(0) @binding(0) var samp: sampler;
+          @group(0) @binding(1) var tex: texture_2d<f32>;
+          @fragment fn fs(in: VSOut) -> @location(0) vec4f {
+            return textureSample(tex, samp, in.uv);
+          }
+        `,
+      });
+      this.pipeline = this.device.createRenderPipeline({
+        layout: "auto",
+        vertex: { module, entryPoint: "vs" },
+        fragment: { module, entryPoint: "fs", targets: [{ format: this.format }] },
+        primitive: { topology: "triangle-strip" },
+      });
+      this.ready = true;
+    } catch (error) {
+      console.warn("WebGPU renderer initialization failed.", error);
+      this.failed = true;
+    }
+  }
+
+  ensureSize(width, height) {
+    if (this.intermediateCanvas.width !== width) this.intermediateCanvas.width = width;
+    if (this.intermediateCanvas.height !== height) this.intermediateCanvas.height = height;
+    if (this.gpuCanvas.width !== width) this.gpuCanvas.width = width;
+    if (this.gpuCanvas.height !== height) this.gpuCanvas.height = height;
+    if (!this.ready || !this.device) return;
+    if (this.lastWidth === width && this.lastHeight === height) return;
+    this.lastWidth = width;
+    this.lastHeight = height;
+    this.texture = this.device.createTexture({
+      size: { width, height },
+      format: "rgba8unorm",
+      usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
+    });
+    this.bindGroup = this.device.createBindGroup({
+      layout: this.pipeline.getBindGroupLayout(0),
+      entries: [
+        { binding: 0, resource: this.sampler },
+        { binding: 1, resource: this.texture.createView() },
+      ],
+    });
+  }
+
+  render(outCtx, width, height, seconds, params, frameIndex, fps, renderOptions) {
+    this.ensureSize(width, height);
+    this.legacy.render(this.intermediateCtx, width, height, seconds, params, frameIndex, fps, renderOptions);
+    if (this.failed || !this.ready || !this.device || !this.texture || !this.bindGroup) {
+      outCtx.clearRect(0, 0, width, height);
+      outCtx.drawImage(this.intermediateCanvas, 0, 0, width, height);
+      return { uploadMs: 0, presentMs: 0 };
+    }
+    const uploadStart = performance.now();
+    this.device.queue.copyExternalImageToTexture(
+      { source: this.intermediateCanvas },
+      { texture: this.texture },
+      { width, height },
+    );
+    const uploadMs = performance.now() - uploadStart;
+    const presentStart = performance.now();
+    const encoder = this.device.createCommandEncoder();
+    const pass = encoder.beginRenderPass({
+      colorAttachments: [{
+        view: this.gpuCtx.getCurrentTexture().createView(),
+        loadOp: "clear",
+        storeOp: "store",
+        clearValue: { r: 0, g: 0, b: 0, a: 1 },
+      }],
+    });
+    pass.setPipeline(this.pipeline);
+    pass.setBindGroup(0, this.bindGroup);
+    pass.draw(4);
+    pass.end();
+    this.device.queue.submit([encoder.finish()]);
+    outCtx.clearRect(0, 0, width, height);
+    outCtx.drawImage(this.gpuCanvas, 0, 0, width, height);
+    return { uploadMs, presentMs: performance.now() - presentStart };
+  }
+
+  getName() {
+    return "webgpu";
+  }
+}
+
+class WebGL2RendererAdapter extends LegacyRendererAdapter {
+  static isSupported() {
+    const c = document.createElement("canvas");
+    return !!c.getContext("webgl2", { antialias: false, preserveDrawingBuffer: false });
+  }
+
+  constructor() {
+    super();
+    this.gpuCanvas = document.createElement("canvas");
+    this.gl = this.gpuCanvas.getContext("webgl2", { antialias: false, preserveDrawingBuffer: false });
+    if (!this.gl) throw new Error("WebGL2 unavailable");
+    this.contextLost = false;
+    this.gpuCanvas.addEventListener("webglcontextlost", (event) => {
+      event.preventDefault();
+      this.contextLost = true;
+    });
+    this.intermediateCanvas = document.createElement("canvas");
+    this.intermediateCtx = this.intermediateCanvas.getContext("2d", { alpha: false, desynchronized: true });
+    this.program = this.createProgram();
+    this.texture = this.gl.createTexture();
+    this.vertexBuffer = this.gl.createBuffer();
+    const verts = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, verts, this.gl.STATIC_DRAW);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+  }
+
+  createProgram() {
+    const gl = this.gl;
+    const compile = (type, source) => {
+      const shader = gl.createShader(type);
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        throw new Error(gl.getShaderInfoLog(shader) || "shader compile error");
+      }
+      return shader;
+    };
+    const vs = compile(gl.VERTEX_SHADER, `#version 300 es\nin vec2 a;out vec2 uv;void main(){uv=a*0.5+0.5;gl_Position=vec4(a,0,1);}`);
+    const fs = compile(gl.FRAGMENT_SHADER, `#version 300 es\nprecision highp float;in vec2 uv;uniform sampler2D t;out vec4 o;void main(){o=texture(t,uv);}`);
+    const program = gl.createProgram();
+    gl.attachShader(program, vs);
+    gl.attachShader(program, fs);
+    gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      throw new Error(gl.getProgramInfoLog(program) || "program link error");
+    }
+    gl.deleteShader(vs);
+    gl.deleteShader(fs);
+    return program;
+  }
+
+  ensureSize(width, height) {
+    if (this.intermediateCanvas.width !== width) this.intermediateCanvas.width = width;
+    if (this.intermediateCanvas.height !== height) this.intermediateCanvas.height = height;
+    if (this.gpuCanvas.width !== width) this.gpuCanvas.width = width;
+    if (this.gpuCanvas.height !== height) this.gpuCanvas.height = height;
+  }
+
+  render(outCtx, width, height, seconds, params, frameIndex, fps, renderOptions) {
+    this.ensureSize(width, height);
+    const gl = this.gl;
+    const uploadStart = performance.now();
+    this.legacy.render(this.intermediateCtx, width, height, seconds, params, frameIndex, fps, renderOptions);
+    if (this.contextLost) {
+      outCtx.clearRect(0, 0, width, height);
+      outCtx.drawImage(this.intermediateCanvas, 0, 0, width, height);
+      return { uploadMs: 0, presentMs: 0 };
+    }
+    gl.viewport(0, 0, width, height);
+    gl.useProgram(this.program);
+    gl.bindTexture(gl.TEXTURE_2D, this.texture);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.intermediateCanvas);
+    const uploadMs = performance.now() - uploadStart;
+    const pos = gl.getAttribLocation(this.program, "a");
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+    gl.enableVertexAttribArray(pos);
+    gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
+    const presentStart = performance.now();
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    outCtx.clearRect(0, 0, width, height);
+    outCtx.drawImage(this.gpuCanvas, 0, 0, width, height);
+    return { uploadMs, presentMs: performance.now() - presentStart };
+  }
+
+  getName() {
+    return "webgl2";
+  }
+}
+
+function createRendererAdapter() {
+  const search = new URLSearchParams(window.location.search);
+  const debugRenderDiagnostics = search.get("debugRender") === "1";
+  const forceRenderer = (search.get("renderer") || "").toLowerCase();
+  // Keep legacy as the default renderer path for stability.
+  // GPU/offscreen adapters are opt-in via `?renderer=` for controlled testing,
+  // and only enabled while diagnostics mode is active.
+  if (!forceRenderer) return new LegacyRendererAdapter();
+  if (!debugRenderDiagnostics) {
+    console.warn("Ignoring forced renderer because debug diagnostics mode is disabled.", { forceRenderer });
+    return new LegacyRendererAdapter();
+  }
+  return createRendererAdapterAutomatic(forceRenderer);
+}
+
+function createRendererAdapterAutomatic(forceRenderer = "") {
+  const forceMatch = forceRenderer ? new Set([forceRenderer]) : null;
+  const candidates = [
+    { name: "webgpu", test: () => WebGPURendererAdapter.isSupported(), create: () => new WebGPURendererAdapter() },
+    { name: "webgl2", test: () => WebGL2RendererAdapter.isSupported(), create: () => new WebGL2RendererAdapter() },
+    { name: "offscreen", test: () => OffscreenCanvasRendererAdapter.isSupported(), create: () => new OffscreenCanvasRendererAdapter() },
+    { name: "legacy", test: () => true, create: () => new LegacyRendererAdapter() },
+  ];
+  for (const candidate of candidates) {
+    if (forceMatch && !forceMatch.has(candidate.name)) continue;
+    if (!candidate.test()) continue;
+    try {
+      return candidate.create();
+    } catch (error) {
+      console.warn(`Renderer init failed for ${candidate.name}, falling back.`, error);
+    }
+  }
+  if (forceMatch) {
+    console.warn("Requested renderer was unavailable; falling back to legacy.", { forceRenderer });
+  }
+  return new LegacyRendererAdapter();
 }
 
 function downloadBlob(blob, filename) {
@@ -2781,7 +3163,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
 }
 
 (function boot() {
-  const renderer = new CRTRenderer();
+  const renderer = createRendererAdapter();
   const canvas = document.getElementById("previewCanvas");
   const ctx = canvas.getContext("2d", { alpha: false, desynchronized: true });
   const statusEl = document.getElementById("status");
@@ -2823,6 +3205,15 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   const presetFilterMeta = document.getElementById("presetFilterMeta");
   const exportEstimateEl = document.getElementById("exportEstimate");
   const densityModeRoot = document.getElementById("densityMode");
+  const debugRenderDiagnostics = /[?&]debugRender=1/.test(window.location.search);
+  const diagnostics = new RenderDiagnostics(debugRenderDiagnostics);
+  const diagnosticsEl = document.createElement("div");
+  if (debugRenderDiagnostics) {
+    diagnosticsEl.style.cssText = "position:fixed;bottom:8px;right:8px;z-index:9999;background:rgba(0,0,0,.75);color:#9ff;padding:8px 10px;font:12px/1.4 monospace;border:1px solid rgba(150,255,255,.35);pointer-events:none;";
+    diagnosticsEl.textContent = `Renderer: ${renderer.getName()} (collecting...)`;
+    document.body.appendChild(diagnosticsEl);
+    console.info("[render diagnostics] enabled", { renderer: renderer.getName() });
+  }
 
   const controlIds = [
     "scanlineStrength",
@@ -4184,6 +4575,8 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
 
   function animate(now) {
     const fps = Math.max(1, Number(document.getElementById("fps").value) || 30);
+    const expectedFrameMs = 1000 / fps;
+    diagnostics.beginFrame(now, expectedFrameMs);
     const elapsed = (now - start) / 1000;
     const frame = Math.floor(elapsed * fps);
     const stillMode = isStillPreviewMode();
@@ -4222,6 +4615,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
 
     const shouldRender = previewDirty;
     if (shouldRender) {
+      const frameStart = performance.now();
       if (showOriginalPreview && renderer.hasImage) {
         const source = loadedSourceType === "video" ? loadedVideo?.video : loadedImage;
         if (source) {
@@ -4235,24 +4629,40 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
           const drawH = Math.max(1, Math.round(srcH * scale));
           ctx.drawImage(source, (canvas.width - drawW) / 2, (canvas.height - drawH) / 2, drawW, drawH);
           previewDirty = false;
+          if (debugRenderDiagnostics) {
+            diagnostics.commit({ frameMs: performance.now() - frameStart, uploadMs: 0, presentMs: 0, latencyMs: now - start });
+          }
           requestAnimationFrame(animate);
           return;
         }
       }
       const { width: previewWidth, height: previewHeight } = getPreviewRenderSize();
+      let renderMetrics = { uploadMs: 0, presentMs: 0 };
       if (previewWidth === canvas.width && previewHeight === canvas.height) {
-        renderer.render(ctx, canvas.width, canvas.height, frame / fps, readParams(), frame, fps, readOSDOptions(loadedSourceType === "video" ? previewFrameSeconds : frame / fps));
+        renderMetrics = renderer.render(ctx, canvas.width, canvas.height, frame / fps, readParams(), frame, fps, readOSDOptions(loadedSourceType === "video" ? previewFrameSeconds : frame / fps)) || renderMetrics;
       } else {
-        previewBuffer.width = previewWidth;
-        previewBuffer.height = previewHeight;
+        if (previewBuffer.width !== previewWidth) previewBuffer.width = previewWidth;
+        if (previewBuffer.height !== previewHeight) previewBuffer.height = previewHeight;
         const previewCtx = previewBuffer.getContext("2d", { alpha: false, desynchronized: true });
-        renderer.render(previewCtx, previewBuffer.width, previewBuffer.height, frame / fps, readParams(), frame, fps, readOSDOptions(loadedSourceType === "video" ? previewFrameSeconds : frame / fps));
+        renderMetrics = renderer.render(previewCtx, previewBuffer.width, previewBuffer.height, frame / fps, readParams(), frame, fps, readOSDOptions(loadedSourceType === "video" ? previewFrameSeconds : frame / fps)) || renderMetrics;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = "high";
         ctx.drawImage(previewBuffer, 0, 0, canvas.width, canvas.height);
+      }
+      if (debugRenderDiagnostics) {
+        diagnostics.commit({
+          frameMs: performance.now() - frameStart,
+          uploadMs: renderMetrics.uploadMs || 0,
+          presentMs: renderMetrics.presentMs || 0,
+          latencyMs: now - start,
+        });
+        const sample = diagnostics.snapshot(renderer.getName());
+        if (sample) {
+          diagnosticsEl.textContent = `Renderer:${sample.renderer} frame:${sample.frameMs.toFixed(2)}ms upload:${sample.uploadMs.toFixed(2)}ms present:${sample.presentMs.toFixed(2)}ms dropped:${sample.droppedFrames} blocked:${sample.mainThreadBlockedMs.toFixed(1)}ms`;
+        }
       }
       previewDirty = false;
     }
