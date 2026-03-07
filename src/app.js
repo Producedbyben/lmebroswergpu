@@ -2054,8 +2054,13 @@ class CRTRenderer {
       modern: '"Inter", "Segoe UI", "Arial", sans-serif',
     };
     const cctvMonochrome = Math.max(0, Math.min(1, Number(params.advancedCctvMonochrome) || 0));
+    const brightness = Math.max(0.5, Math.min(1.5, Number(params.imageBrightness) || 1));
+    const contrast = Math.max(0.5, Math.min(1.6, Number(params.imageContrast) || 1));
     const saturationRaw = Number(params.advancedSaturation);
     const saturation = Math.max(0, Math.min(2, Number.isFinite(saturationRaw) ? saturationRaw : 1));
+    const gamma = Math.max(0.6, Math.min(1.8, Number(params.imageGamma) || 1));
+    const temperature = Math.max(-1, Math.min(1, Number(params.imageTemperature) || 0));
+    const tint = Math.max(-1, Math.min(1, Number(params.imageTint) || 0));
     const quantization = Math.max(0, Math.min(1, Number(params.advancedQuantization) || 0));
     const generationLoss = Math.max(0, Math.min(1, Number(params.advancedGenerationLoss) || 0));
     const macroBlocking = Math.max(0, Math.min(1, Number(params.advancedMacroBlocking) || 0));
@@ -2776,12 +2781,48 @@ class CRTRenderer {
       outCtx.restore();
     }
 
-    if (Math.abs(saturation - 1) > 0.001) {
+    if (
+      Math.abs(saturation - 1) > 0.001 ||
+      Math.abs(brightness - 1) > 0.001 ||
+      Math.abs(contrast - 1) > 0.001
+    ) {
       outCtx.save();
       outCtx.globalAlpha = 1;
-      outCtx.filter = `saturate(${saturation.toFixed(3)})`;
+      outCtx.filter = `brightness(${brightness.toFixed(3)}) contrast(${contrast.toFixed(3)}) saturate(${saturation.toFixed(3)})`;
       outCtx.drawImage(outCtx.canvas, 0, 0);
       outCtx.restore();
+    }
+
+    if (
+      Math.abs(gamma - 1) > 0.001 ||
+      Math.abs(temperature) > 0.001 ||
+      Math.abs(tint) > 0.001
+    ) {
+      const image = outCtx.getImageData(0, 0, width, height);
+      const data = image.data;
+      const invGamma = 1 / gamma;
+      const tempShift = temperature * 28;
+      const tintShift = tint * 24;
+      for (let i = 0; i < data.length; i += 4) {
+        let r = data[i];
+        let g = data[i + 1];
+        let b = data[i + 2];
+
+        if (Math.abs(gamma - 1) > 0.001) {
+          r = Math.pow(r / 255, invGamma) * 255;
+          g = Math.pow(g / 255, invGamma) * 255;
+          b = Math.pow(b / 255, invGamma) * 255;
+        }
+
+        r += tempShift + tintShift * 0.33;
+        g -= tintShift;
+        b -= tempShift + tintShift * 0.33;
+
+        data[i] = Math.max(0, Math.min(255, r));
+        data[i + 1] = Math.max(0, Math.min(255, g));
+        data[i + 2] = Math.max(0, Math.min(255, b));
+      }
+      outCtx.putImageData(image, 0, 0);
     }
   }
 }
@@ -3511,6 +3552,11 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     "phosphorMask",
     "barrelDistortion",
     "bloom",
+    "imageBrightness",
+    "imageContrast",
+    "imageGamma",
+    "imageTemperature",
+    "imageTint",
     "advancedNeonPhosphorBleed",
     "flicker",
     "chromaticAberration",
@@ -3615,7 +3661,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     },
     digital: {
       toggleId: "digitalEffectsEnabled",
-      controlIds: ["noise", "advancedFrameStutter", "advancedRfInterference", "advancedCctvMonochrome", "advancedSaturation", "advancedQuantization", "advancedGenerationLoss", "advancedMacroBlocking"],
+      controlIds: ["noise", "advancedFrameStutter", "advancedRfInterference", "advancedCctvMonochrome", "advancedQuantization", "advancedGenerationLoss", "advancedMacroBlocking"],
     },
     film: {
       toggleId: "filmEffectsEnabled",
@@ -3839,7 +3885,12 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     advancedTapeCrease: "Tape crease events",
     advancedTimestampOSD: "Timestamp intensity",
     advancedCctvMonochrome: "CCTV monochrome",
+    imageBrightness: "Brightness",
+    imageContrast: "Contrast",
     advancedSaturation: "Saturation",
+    imageGamma: "Gamma",
+    imageTemperature: "Temperature",
+    imageTint: "Tint",
     advancedQuantization: "Quantization/crush",
     advancedGenerationLoss: "Generation loss",
     advancedMacroBlocking: "Macroblocking",
@@ -3893,10 +3944,23 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
       wrapper.appendChild(resetBtn);
     }
 
+    const updateRangeVisual = () => {
+      const min = Number(slider.min);
+      const max = Number(slider.max);
+      const current = Number(slider.value);
+      if (!Number.isFinite(min) || !Number.isFinite(max) || max <= min || !Number.isFinite(current)) {
+        slider.style.setProperty("--range-progress", "50%");
+        return;
+      }
+      const pct = ((current - min) / (max - min)) * 100;
+      slider.style.setProperty("--range-progress", `${Math.max(0, Math.min(100, pct)).toFixed(2)}%`);
+    };
+
     const syncToNumber = () => {
       numericInput.value = slider.value;
       numericInput.disabled = slider.disabled;
       if (resetBtn) resetBtn.disabled = slider.disabled;
+      updateRangeVisual();
     };
 
     const clampToRange = (value) => {
@@ -4093,26 +4157,59 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     };
 
     const jumpButtons = Array.from(document.querySelectorAll("[data-jump-target]"));
-    for (const button of jumpButtons) {
-      button.addEventListener("click", () => {
-        const target = document.getElementById(button.dataset.jumpTarget || "");
-        if (!target) return;
 
-        const tabPanel = target.closest(".inspector-tab[data-panel]");
-        if (tabPanel) {
-          const tabName = tabPanel.dataset.panel;
-          const tabButton = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
-          tabButton?.click();
-        }
+    const activateJumpTarget = (target) => {
+      if (!target) return;
 
+      const tabPanel = target.closest(".inspector-tab[data-panel]");
+      if (tabPanel) {
+        const tabName = tabPanel.dataset.panel;
+        const tabButton = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+        tabButton?.click();
+      }
+
+      const targetIsCollapsible = collapsiblePanels.includes(target);
+      if (targetIsCollapsible) {
         for (const panel of collapsiblePanels) {
           if (panel.id === "workspacePanel") continue;
           collapsePanel(panel, panel !== target);
         }
+      }
 
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      target.classList.remove("panel-spotlight");
+      requestAnimationFrame(() => target.classList.add("panel-spotlight"));
+      window.setTimeout(() => target.classList.remove("panel-spotlight"), 900);
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+
+    for (const button of jumpButtons) {
+      button.addEventListener("click", () => {
+        const target = document.getElementById(button.dataset.jumpTarget || "");
+        activateJumpTarget(target);
       });
     }
+
+    const workflowButtons = Array.from(document.querySelectorAll(".app-workflow [data-jump-target]"));
+    window.addEventListener("keydown", (event) => {
+      if (!event.altKey || event.ctrlKey || event.metaKey) return;
+      const active = document.activeElement;
+      if (
+        active instanceof HTMLElement &&
+        (active.matches("input, textarea, select") || active.isContentEditable)
+      ) {
+        return;
+      }
+
+      const digitMatch = /^Digit([1-9])$/.exec(event.code || "");
+      if (!digitMatch) return;
+      const index = Number(digitMatch[1]) - 1;
+      const button = workflowButtons[index];
+      if (!button) return;
+
+      event.preventDefault();
+      const target = document.getElementById(button.dataset.jumpTarget || "");
+      activateJumpTarget(target);
+    });
   }
 
   function setupDensityMode() {
