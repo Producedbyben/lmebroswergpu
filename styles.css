@@ -1291,3 +1291,80 @@ body[data-theme="graphite"] .toolbar-cluster,
 body[data-theme="graphite"] .export-dock {
   background: linear-gradient(180deg, #2f2f2f 0%, #252525 100%);
 }
+
+/* --- Iteration: improve theme discoverability + slider readability --- */
+.toolbar-theme-strip {
+  border: 1px solid rgba(95, 118, 154, 0.72);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgba(24, 34, 50, 0.94), rgba(19, 27, 40, 0.96));
+  padding: 0.45rem 0.5rem;
+}
+
+.toolbar-theme-strip > label {
+  display: grid;
+  gap: 0.35rem;
+  color: #d9e6fa;
+}
+
+.toolbar-theme-strip #themeMode {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.3rem;
+}
+
+.toolbar-theme-strip #themeMode button {
+  width: 100%;
+  min-height: 2rem;
+  font-size: 0.7rem;
+  font-weight: 650;
+}
+
+.panel-grid-2 {
+  grid-template-columns: 1fr;
+}
+
+.panel-span-2 {
+  grid-column: auto;
+}
+
+.range-control {
+  grid-template-columns: minmax(0, 1fr) 88px 30px;
+  gap: 0.45rem;
+}
+
+.range-control-compact {
+  grid-template-columns: minmax(0, 1fr) 88px;
+}
+
+input[type="range"] {
+  height: 22px;
+}
+
+input[type="range"]::-webkit-slider-runnable-track,
+input[type="range"]::-moz-range-track,
+input[type="range"]::-moz-range-progress {
+  height: 8px;
+}
+
+input[type="range"]::-webkit-slider-thumb,
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 1180px) {
+  .toolbar-theme-strip {
+    padding: 0.42rem 0.45rem;
+  }
+}
+
+@media (max-width: 720px) {
+  .toolbar-theme-strip #themeMode {
+    grid-template-columns: 1fr;
+  }
+
+  .range-control,
+  .range-control-compact {
+    grid-template-columns: 1fr;
+  }
+}
