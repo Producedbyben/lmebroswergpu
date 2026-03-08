@@ -3544,6 +3544,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   const presetFilterMeta = document.getElementById("presetFilterMeta");
   const exportEstimateEl = document.getElementById("exportEstimate");
   const densityModeRoot = document.getElementById("densityMode");
+  const themeSelectRoot = document.getElementById("themeSelect");
   const themeModeRoot = document.getElementById("themeMode");
   const undoLookBtn = document.getElementById("undoLookBtn");
   const redoLookBtn = document.getElementById("redoLookBtn");
@@ -4270,6 +4271,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     const setTheme = (value) => {
       const theme = validThemes.has(value) ? value : "midnight";
       document.body.dataset.theme = theme;
+      if (themeSelectRoot) themeSelectRoot.value = theme;
       try {
         localStorage.setItem(storageKey, theme);
       } catch {
@@ -4277,13 +4279,17 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
       }
     };
 
-    const themeControl = setupSelectionBox("themeMode", {
-      onChange: (value) => setTheme(value),
-    });
+    if (themeSelectRoot) {
+      themeSelectRoot.addEventListener("change", () => {
+        setTheme(themeSelectRoot.value);
+      });
+    }
 
-    if (!themeModeRoot) {
-      setTheme("midnight");
-      return;
+    let legacyThemeControl = null;
+    if (themeModeRoot) {
+      legacyThemeControl = setupSelectionBox("themeMode", {
+        onChange: (value) => setTheme(value),
+      });
     }
 
     let stored = "midnight";
@@ -4294,7 +4300,9 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     }
 
     const normalized = validThemes.has(stored) ? stored : "midnight";
-    themeControl.setValue(normalized, { silent: true });
+    if (legacyThemeControl) {
+      legacyThemeControl.setValue(normalized, { silent: true });
+    }
     setTheme(normalized);
   }
 

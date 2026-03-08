@@ -1368,3 +1368,116 @@ input[type="range"]::-moz-range-thumb {
     grid-template-columns: 1fr;
   }
 }
+
+/* --- Iteration: Lightroom-like compact top chrome + theme dropdown in brand card --- */
+.app-brand {
+  gap: 0.42rem;
+}
+
+.theme-dropdown-control {
+  margin-top: 0.2rem;
+  gap: 0.24rem;
+  font-size: 0.69rem;
+  color: #b9c9e4;
+}
+
+.theme-dropdown-control select {
+  min-height: 1.9rem;
+  font-size: 0.74rem;
+  font-weight: 620;
+  background: linear-gradient(180deg, #2b3b53 0%, #23314a 100%);
+  border-color: #5f79a3;
+}
+
+.workspace-toolbar {
+  padding: 0.42rem 0.55rem;
+  gap: 0.42rem;
+}
+
+.workspace-top-tabs {
+  gap: 0.32rem;
+  padding-bottom: 0.08rem;
+}
+
+.workspace-top-tabs > button {
+  min-height: 1.74rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+}
+
+.workspace-toolbar-grid {
+  grid-template-columns: minmax(300px, 1.45fr) minmax(230px, 1fr) minmax(210px, 0.9fr);
+  gap: 0.4rem;
+}
+
+.toolbar-cluster {
+  padding: 0.35rem;
+  gap: 0.28rem;
+  border-radius: 10px;
+}
+
+.toolbar-cluster label {
+  font-size: 0.69rem;
+  gap: 0.2rem;
+}
+
+.toolbar-cluster .selection-box button,
+.toolbar-cluster button {
+  min-height: 1.62rem;
+  padding: 0.24rem 0.4rem;
+  font-size: 0.68rem;
+}
+
+.toolbar-cluster-preview {
+  grid-template-columns: 1fr 1fr;
+}
+
+.toolbar-cluster-preview .selection-inline {
+  flex-wrap: wrap;
+}
+
+.toolbar-cluster-session {
+  grid-template-columns: 1fr;
+  align-content: start;
+}
+
+.toolbar-cluster-session .history-actions {
+  gap: 0.26rem;
+}
+
+.toolbar-cluster-compare .compare-actions {
+  gap: 0.24rem;
+}
+
+.toolbar-theme-strip {
+  display: none;
+}
+
+@media (max-width: 1420px) {
+  .workspace-toolbar-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .toolbar-cluster-compare {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 1180px) {
+  .workspace-top-tabs > button {
+    min-height: 1.7rem;
+  }
+
+  .workspace-toolbar-grid,
+  .toolbar-cluster-preview {
+    grid-template-columns: 1fr;
+  }
+
+  .toolbar-cluster-compare {
+    grid-column: auto;
+  }
+
+  .theme-dropdown-control select {
+    min-height: 1.8rem;
+  }
+}
