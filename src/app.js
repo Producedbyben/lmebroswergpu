@@ -3526,6 +3526,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   const osdStyleInput = document.getElementById("advancedOSDStyle");
   const compareHoldBtn = document.getElementById("compareHoldBtn");
   const compareLockBtn = document.getElementById("compareLockBtn");
+  const compareSplitEnabledInput = document.getElementById("compareSplitEnabled");
   const presetDirtyTag = document.getElementById("presetDirtyTag");
   const presetIntensityInput = document.getElementById("presetIntensity");
   const presetCategoryFilter = document.getElementById("presetCategoryFilter");
@@ -3641,6 +3642,9 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   let previewDirty = true;
   let showOriginalPreview = false;
   let compareLocked = false;
+  let compareSplitEnabled = false;
+  let compareSplitRatio = 0.5;
+  let isDraggingCompareSplit = false;
   let activePresetName = null;
   const presetIntensityProfiles = new Map();
   const presetCategories = new Map();
@@ -5193,21 +5197,82 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     const shouldRender = previewDirty;
     if (shouldRender) {
       const frameStart = performance.now();
-      if (showOriginalPreview && renderer.hasImage) {
+      if ((showOriginalPreview || compareSplitEnabled) && renderer.hasImage) {
         const source = loadedSourceType === "video" ? loadedVideo?.video : loadedImage;
         if (source) {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.fillStyle = "black";
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
           const srcW = source.videoWidth || source.naturalWidth || canvas.width;
           const srcH = source.videoHeight || source.naturalHeight || canvas.height;
           const scale = Math.min(canvas.width / srcW, canvas.height / srcH);
           const drawW = Math.max(1, Math.round(srcW * scale));
           const drawH = Math.max(1, Math.round(srcH * scale));
-          ctx.drawImage(source, (canvas.width - drawW) / 2, (canvas.height - drawH) / 2, drawW, drawH);
+          const drawX = Math.round((canvas.width - drawW) / 2);
+          const drawY = Math.round((canvas.height - drawH) / 2);
+
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = "black";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          if (!compareSplitEnabled) {
+            ctx.drawImage(source, drawX, drawY, drawW, drawH);
+            previewDirty = false;
+            if (debugRenderDiagnostics) {
+              diagnostics.commit({ frameMs: performance.now() - frameStart, uploadMs: 0, presentMs: 0, latencyMs: now - start });
+            }
+            requestAnimationFrame(animate);
+            return;
+          }
+
+          const splitX = drawX + Math.round(drawW * compareSplitRatio);
+          const leftWidth = Math.max(0, splitX - drawX);
+          const rightWidth = Math.max(0, drawW - leftWidth);
+
+          if (leftWidth > 0) {
+            ctx.drawImage(source, 0, 0, srcW, srcH, drawX, drawY, leftWidth, drawH);
+          }
+
+          const { width: previewWidth, height: previewHeight } = getPreviewRenderSize();
+          let renderMetrics = { uploadMs: 0, presentMs: 0 };
+          if (previewWidth !== canvas.width || previewHeight !== canvas.height) {
+            if (previewBuffer.width !== previewWidth) previewBuffer.width = previewWidth;
+            if (previewBuffer.height !== previewHeight) previewBuffer.height = previewHeight;
+            const previewCtx = previewBuffer.getContext("2d", { alpha: false, desynchronized: true });
+            renderMetrics = renderer.render(previewCtx, previewBuffer.width, previewBuffer.height, frame / fps, readParams(), frame, fps, readOSDOptions(loadedSourceType === "video" ? previewFrameSeconds : frame / fps)) || renderMetrics;
+          }
+
+          if (rightWidth > 0) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(splitX, drawY, rightWidth, drawH);
+            ctx.clip();
+            if (previewWidth === canvas.width && previewHeight === canvas.height) {
+              renderMetrics = renderer.render(ctx, canvas.width, canvas.height, frame / fps, readParams(), frame, fps, readOSDOptions(loadedSourceType === "video" ? previewFrameSeconds : frame / fps)) || renderMetrics;
+            } else {
+              ctx.imageSmoothingEnabled = true;
+              ctx.imageSmoothingQuality = "high";
+              ctx.drawImage(previewBuffer, 0, 0, canvas.width, canvas.height);
+            }
+            ctx.restore();
+          }
+
+          ctx.save();
+          ctx.strokeStyle = "rgba(226, 237, 255, 0.95)";
+          ctx.lineWidth = 2;
+          ctx.shadowColor = "rgba(20, 32, 48, 0.75)";
+          ctx.shadowBlur = 2;
+          ctx.beginPath();
+          ctx.moveTo(splitX + 0.5, drawY);
+          ctx.lineTo(splitX + 0.5, drawY + drawH);
+          ctx.stroke();
+          ctx.restore();
+
           previewDirty = false;
           if (debugRenderDiagnostics) {
-            diagnostics.commit({ frameMs: performance.now() - frameStart, uploadMs: 0, presentMs: 0, latencyMs: now - start });
+            diagnostics.commit({
+              frameMs: performance.now() - frameStart,
+              uploadMs: renderMetrics.uploadMs || 0,
+              presentMs: renderMetrics.presentMs || 0,
+              latencyMs: now - start,
+            });
           }
           requestAnimationFrame(animate);
           return;
@@ -5782,6 +5847,45 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   });
   compareHoldBtn?.addEventListener("blur", () => {
     if (!compareLocked) setCompareState(false, { lock: false });
+  });
+
+  compareSplitEnabledInput?.addEventListener("change", (event) => {
+    compareSplitEnabled = !!event.target.checked;
+    markPreviewDirty();
+    setStatus(compareSplitEnabled ? "Split compare enabled." : "Split compare disabled.", "info");
+  });
+
+  function updateCompareSplitFromEvent(event) {
+    if (!compareSplitEnabled) return;
+    const rect = canvas.getBoundingClientRect();
+    if (!rect.width) return;
+    const ratio = (event.clientX - rect.left) / rect.width;
+    compareSplitRatio = Math.min(1, Math.max(0, ratio));
+    markPreviewDirty();
+  }
+
+  canvas.addEventListener("pointerdown", (event) => {
+    if (!compareSplitEnabled) return;
+    isDraggingCompareSplit = true;
+    canvas.setPointerCapture?.(event.pointerId);
+    updateCompareSplitFromEvent(event);
+  });
+
+  canvas.addEventListener("pointermove", (event) => {
+    if (!isDraggingCompareSplit) return;
+    updateCompareSplitFromEvent(event);
+  });
+
+  canvas.addEventListener("pointerup", (event) => {
+    if (!isDraggingCompareSplit) return;
+    isDraggingCompareSplit = false;
+    canvas.releasePointerCapture?.(event.pointerId);
+  });
+
+  canvas.addEventListener("pointercancel", (event) => {
+    if (!isDraggingCompareSplit) return;
+    isDraggingCompareSplit = false;
+    canvas.releasePointerCapture?.(event.pointerId);
   });
 
   window.addEventListener("keydown", (event) => {
