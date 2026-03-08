@@ -5197,7 +5197,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     const shouldRender = previewDirty;
     if (shouldRender) {
       const frameStart = performance.now();
-      if (showOriginalPreview && renderer.hasImage) {
+      if ((showOriginalPreview || compareSplitEnabled) && renderer.hasImage) {
         const source = loadedSourceType === "video" ? loadedVideo?.video : loadedImage;
         if (source) {
           const srcW = source.videoWidth || source.naturalWidth || canvas.width;
@@ -5856,7 +5856,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   });
 
   function updateCompareSplitFromEvent(event) {
-    if (!showOriginalPreview || !compareSplitEnabled) return;
+    if (!compareSplitEnabled) return;
     const rect = canvas.getBoundingClientRect();
     if (!rect.width) return;
     const ratio = (event.clientX - rect.left) / rect.width;
@@ -5865,7 +5865,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   }
 
   canvas.addEventListener("pointerdown", (event) => {
-    if (!showOriginalPreview || !compareSplitEnabled) return;
+    if (!compareSplitEnabled) return;
     isDraggingCompareSplit = true;
     canvas.setPointerCapture?.(event.pointerId);
     updateCompareSplitFromEvent(event);
