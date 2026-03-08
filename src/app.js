@@ -3496,6 +3496,8 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   const cancelExportBtn = document.getElementById("cancelExportBtn");
   const resetParamsBtn = document.getElementById("resetParamsBtn");
   const resetSourceBtn = document.getElementById("resetSourceBtn");
+  const quickResetSourceBtn = document.getElementById("quickResetSourceBtn");
+  const quickResetLookBtn = document.getElementById("quickResetLookBtn");
   const downloadStillBtn = document.getElementById("downloadStillBtn");
   const imageInput = document.getElementById("imageInput");
   const presetSelect = document.getElementById("presetSelect");
@@ -4251,7 +4253,9 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     if (downloadStillBtn) downloadStillBtn.disabled = !hasLoadedSource || isExporting;
     cancelExportBtn.disabled = !isExporting;
     resetSourceBtn.disabled = isExporting;
+    if (quickResetSourceBtn) quickResetSourceBtn.disabled = isExporting;
     resetParamsBtn.disabled = isExporting;
+    if (quickResetLookBtn) quickResetLookBtn.disabled = isExporting;
     imageInput.disabled = isExporting;
     document.getElementById("fps").disabled = isExporting;
     document.getElementById("duration").disabled = isExporting;
@@ -5449,7 +5453,15 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     resetParameters();
   });
 
+  quickResetLookBtn?.addEventListener("click", () => {
+    resetParameters();
+  });
+
   resetSourceBtn.addEventListener("click", () => {
+    clearLoadedSource();
+  });
+
+  quickResetSourceBtn?.addEventListener("click", () => {
     clearLoadedSource();
   });
 
