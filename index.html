@@ -7,31 +7,31 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <a class="skip-link" href="#previewPanel">Skip to preview workspace</a>
     <main class="app">
       <aside class="left-rail">
         <section class="app-brand panel">
           <p class="app-kicker">Develop Workspace</p>
           <h1>Lost Media Emulator</h1>
           <p class="app-subtitle">Color-grade and degrade stills/video with realtime analog controls.</p>
-
-        </section>
-        <section class="panel panel-collapsible" id="workspacePanel" aria-label="Workspace shortcuts">
-          <header class="panel-header">Workspace shortcuts</header>
-          <div class="panel-body quick-grid">
-            <p class="workspace-intro">Jump to any editing stage instantly, then fine-tune with keyboard-friendly controls.</p>
-            <div class="jump-list" aria-label="Quick jump panels">
-              <button type="button" class="secondary-btn" data-jump-target="presetsPanel">Presets</button>
-              <button type="button" class="secondary-btn" data-jump-target="imageControlsPanel">Grade</button>
-              <button type="button" class="secondary-btn" data-jump-target="masksPanel">Masks</button>
-              <button type="button" class="secondary-btn" data-jump-target="crtEffectsPanel">CRT</button>
-              <button type="button" class="secondary-btn" data-jump-target="digitalEffectsPanel">Digital</button>
-              <button type="button" class="secondary-btn" data-jump-target="filmEffectsPanel">Film</button>
-              <button type="button" class="secondary-btn" data-jump-target="artifactsPanel">Artifacts</button>
-              <button type="button" class="secondary-btn" data-jump-target="osdPanel">OSD</button>
-              <button type="button" class="secondary-btn" data-jump-target="previewPanel">Preview</button>
+          <label class="theme-dropdown-control">Interface theme
+            <select id="themeSelect" aria-label="Interface theme">
+              <option value="midnight">Midnight</option>
+              <option value="graphite">Graphite</option>
+              <option value="classic">Classic</option>
+              <option value="dusk">Dusk</option>
+              <option value="forest">Forest</option>
+              <option value="amber">Amber</option>
+              <option value="daylight">Daylight</option>
+              <option value="paper">Paper</option>
+            </select>
+          </label>
+          <label class="density-dropdown-control">Control density
+            <div id="densityMode" class="selection-box selection-inline" role="radiogroup" aria-label="Control density mode">
+              <button type="button" data-value="comfortable" data-selected="true">Comfortable</button>
+              <button type="button" data-value="compact">Compact</button>
             </div>
-            <p class="panel-hint">Tip: use <kbd>Alt+1</kbd> to <kbd>Alt+4</kbd> for the primary workflow shortcuts.</p>
-          </div>
+          </label>
         </section>
 
         <section class="panel panel-collapsible" id="importPanel" aria-label="Import source">
@@ -141,6 +141,17 @@
             <button type="button" class="secondary-btn" data-jump-target="crtEffectsPanel" title="Jump to tuning controls (Alt+3)">Effects</button>
             <button type="button" class="secondary-btn" data-jump-target="exportDock" title="Jump to export controls (Alt+4)">Export</button>
           </div>
+          <nav class="workspace-shortcuts-strip" aria-label="Workspace shortcuts">
+            <button type="button" class="secondary-btn" data-jump-target="presetsPanel">Presets</button>
+            <button type="button" class="secondary-btn" data-jump-target="imageControlsPanel">Grade</button>
+            <button type="button" class="secondary-btn" data-jump-target="masksPanel">Masks</button>
+            <button type="button" class="secondary-btn" data-jump-target="crtEffectsPanel">CRT</button>
+            <button type="button" class="secondary-btn" data-jump-target="digitalEffectsPanel">Digital</button>
+            <button type="button" class="secondary-btn" data-jump-target="filmEffectsPanel">Film</button>
+            <button type="button" class="secondary-btn" data-jump-target="artifactsPanel">Artifacts</button>
+            <button type="button" class="secondary-btn" data-jump-target="osdPanel">OSD</button>
+            <button type="button" class="secondary-btn" data-jump-target="previewPanel">Preview</button>
+          </nav>
 
           <div class="workspace-toolbar-grid">
             <section class="toolbar-cluster toolbar-cluster-preview" aria-label="Preview controls cluster">
@@ -152,21 +163,23 @@
               </label>
               <label>Preview scale
                 <div id="previewScale" class="selection-box selection-inline" role="radiogroup" aria-label="Preview scale">
-                  <button type="button" data-value="1" data-selected="true">100%</button>
-                  <button type="button" data-value="0.75">75%</button>
-                  <button type="button" data-value="0.5">50%</button>
-                  <button type="button" data-value="0.33">33%</button>
+                  <button type="button" data-value="1" data-selected="true">1× Fit</button>
+                  <button type="button" data-value="1.33">1.33×</button>
+                  <button type="button" data-value="2">2×</button>
+                  <button type="button" data-value="3">3×</button>
                 </div>
               </label>
+              <div class="preview-quick-actions" aria-label="Quick preview actions">
+                <button id="previewFitBtn" type="button" class="secondary-btn" title="Reset preview zoom to fit">Fit view</button>
+                <button id="previewCenterBtn" type="button" class="secondary-btn" title="Center the current zoomed view">Center view</button>
+                <button id="previewSplitToggleBtn" type="button" class="secondary-btn" title="Toggle compare split mode">Split compare</button>
+                <button id="previewZoomOutBtn" type="button" class="secondary-btn" title="Step to the previous preview zoom preset">Zoom out</button>
+                <button id="previewZoomInBtn" type="button" class="secondary-btn" title="Step to the next preview zoom preset">Zoom in</button>
+                <button id="previewModeToggleBtn" type="button" class="secondary-btn" title="Toggle between still and playback preview">Toggle playback</button>
+              </div>
             </section>
 
             <section class="toolbar-cluster toolbar-cluster-session" aria-label="Session and history controls cluster">
-              <label>Control density
-                <div id="densityMode" class="selection-box selection-inline" role="radiogroup" aria-label="Control density mode">
-                  <button type="button" data-value="comfortable" data-selected="true">Comfortable</button>
-                  <button type="button" data-value="compact">Compact</button>
-                </div>
-              </label>
               <div class="history-actions" aria-label="Look history controls">
                 <button id="undoLookBtn" type="button" class="secondary-btn" title="Undo look change (Ctrl/Cmd+Z)">Undo</button>
                 <button id="redoLookBtn" type="button" class="secondary-btn" title="Redo look change (Ctrl/Cmd+Shift+Z or Ctrl/Cmd+Y)">Redo</button>
@@ -181,13 +194,13 @@
               <div class="compare-actions compact-actions">
                 <button id="compareHoldBtn" type="button" title="Hold pointer or Space for temporary compare.">Compare</button>
                 <button id="compareLockBtn" type="button" class="secondary-btn" title="Lock/unlock original compare view" aria-pressed="false">Lock compare</button>
-                <button id="downloadStillBtn" type="button">Download still</button>
+                <button id="downloadStillBtn" type="button">Capture still</button>
               </div>
             </section>
           </div>
         </header>
 
-        <section class="preview panel" id="previewPanel">
+        <section class="preview panel" id="previewPanel" tabindex="-1" aria-label="Preview canvas and playback controls">
           <canvas id="previewCanvas" width="960" height="540"></canvas>
           <div class="timeline-row">
             <label>Preview frame (s)
@@ -248,8 +261,8 @@
           </div>
           <p id="exportEstimate" class="export-note">Export summary: 120 frames at 30 FPS (4.0s).</p>
           <p class="export-note">Audio passthrough uses realtime WebM export for best compatibility.</p>
-          <div id="status" class="status">Load an image to begin.</div>
-          <progress id="progress" max="1" value="0"></progress>
+          <div id="status" class="status" role="status" aria-live="polite">Load an image to begin.</div>
+          <progress id="progress" max="1" value="0" aria-label="Export progress"></progress>
         </footer>
       </section>
 
