@@ -13,13 +13,8 @@
           <p class="app-kicker">Develop Workspace</p>
           <h1>Lost Media Emulator</h1>
           <p class="app-subtitle">Color-grade and degrade stills/video with realtime analog controls.</p>
-          <div class="app-workflow" role="group" aria-label="Workflow guide quick actions">
-            <button type="button" class="secondary-btn" data-jump-target="importPanel" title="Jump to import controls (Alt+1)">Import</button>
-            <button type="button" class="secondary-btn" data-jump-target="presetsPanel" title="Jump to preset controls (Alt+2)">Preset</button>
-            <button type="button" class="secondary-btn" data-jump-target="crtEffectsPanel" title="Jump to tuning controls (Alt+3)">Tune</button>
-            <button type="button" class="secondary-btn" data-jump-target="exportDock" title="Jump to export controls (Alt+4)">Export</button>
-          </div>
-                  </section>
+
+        </section>
         <section class="panel panel-collapsible" id="workspacePanel" aria-label="Workspace shortcuts">
           <header class="panel-header">Workspace shortcuts</header>
           <div class="panel-body quick-grid">
@@ -35,16 +30,7 @@
               <button type="button" class="secondary-btn" data-jump-target="osdPanel">OSD</button>
               <button type="button" class="secondary-btn" data-jump-target="previewPanel">Preview</button>
             </div>
-            <label>Control density
-              <div id="densityMode" class="selection-box selection-inline" role="radiogroup" aria-label="Control density mode">
-                <button type="button" data-value="comfortable" data-selected="true">Comfortable</button>
-                <button type="button" data-value="compact">Compact</button>
-              </div>
-            </label>
-            <div class="history-actions" aria-label="Look history controls">
-              <button id="undoLookBtn" type="button" class="secondary-btn" title="Undo look change (Ctrl/Cmd+Z)">Undo</button>
-              <button id="redoLookBtn" type="button" class="secondary-btn" title="Redo look change (Ctrl/Cmd+Shift+Z or Ctrl/Cmd+Y)">Redo</button>
-            </div>
+            <p class="panel-hint">Tip: use <kbd>Alt+1</kbd> to <kbd>Alt+4</kbd> for the primary workflow shortcuts.</p>
           </div>
         </section>
 
@@ -84,37 +70,6 @@
             <div class="actions compact-actions">
               <button id="resetParamsBtn" type="button">Reset look</button>
             </div>
-          </div>
-        </section>
-
-        <section class="panel panel-collapsible" id="masksPanel" aria-label="Mask effects">
-          <header class="panel-header panel-header-toggle">
-            <span>Mask effects</span>
-            <label class="panel-toggle"><input id="masksEnabled" type="checkbox" checked /> Enabled</label>
-          </header>
-          <div class="panel-body quick-grid panel-grid-2">
-            <label class="panel-span-2">Mask pattern
-              <div id="maskType" class="selection-box selection-box-wrap" role="radiogroup" aria-label="Mask pattern">
-                <button type="button" data-value="phosphor" data-selected="true">Phosphor triad</button>
-                <button type="button" data-value="aperture">Aperture grille</button>
-                <button type="button" data-value="slot">Slot mask</button>
-                <button type="button" data-value="dot">Dot mask</button>
-                <button type="button" data-value="shadowMask">Shadow mask</button>
-                <button type="button" data-value="lcdStripeRGB">LCD stripe RGB</button>
-                <button type="button" data-value="oledPentile">OLED pentile</button>
-                <button type="button" data-value="plasmaCell">Plasma cell</button>
-                <button type="button" data-value="filmSuper8">Super 8 stock</button>
-                <button type="button" data-value="film16mm">16mm stock</button>
-                <button type="button" data-value="instantDyeCloud">Instant dye cloud</button>
-                <button type="button" data-value="irBloomSpeckle">IR bloom speckle</button>
-                <button type="button" data-value="cmosRollingColumn">CMOS rolling column</button>
-                <button type="button" data-value="lowBitrateBlockGrid">Low-bitrate block grid</button>
-                <button type="button" data-value="fisheyeMicrolens">Fisheye microlens</button>
-                <button type="button" data-value="none">None</button>
-              </div>
-            </label>
-            <label>Mask strength <span class="range-control"><input id="phosphorMask" type="range" min="0" max="1" step="0.01" value="0.5" /></span></label>
-            <label>Mask scale <span class="range-control"><input id="maskScale" type="range" min="0.25" max="3" step="0.01" value="1" /></span></label>
           </div>
         </section>
 
@@ -195,6 +150,24 @@
               </div>
             </label>
           </div>
+          <div class="toolbar-center top-utility-strip">
+            <div class="app-workflow app-workflow-toolbar" role="group" aria-label="Workflow guide quick actions">
+              <button type="button" class="secondary-btn" data-jump-target="importPanel" title="Jump to import controls (Alt+1)">Import</button>
+              <button type="button" class="secondary-btn" data-jump-target="presetsPanel" title="Jump to preset controls (Alt+2)">Preset</button>
+              <button type="button" class="secondary-btn" data-jump-target="crtEffectsPanel" title="Jump to tuning controls (Alt+3)">Tune</button>
+              <button type="button" class="secondary-btn" data-jump-target="exportDock" title="Jump to export controls (Alt+4)">Export</button>
+            </div>
+            <div class="toolbar-session" aria-label="Session and history controls">
+              <div id="densityMode" class="selection-box selection-inline" role="radiogroup" aria-label="Control density mode">
+                <button type="button" data-value="comfortable" data-selected="true">Comfortable</button>
+                <button type="button" data-value="compact">Compact</button>
+              </div>
+              <div class="history-actions" aria-label="Look history controls">
+                <button id="undoLookBtn" type="button" class="secondary-btn" title="Undo look change (Ctrl/Cmd+Z)">Undo</button>
+                <button id="redoLookBtn" type="button" class="secondary-btn" title="Redo look change (Ctrl/Cmd+Shift+Z or Ctrl/Cmd+Y)">Redo</button>
+              </div>
+            </div>
+          </div>
           <div class="toolbar-right compare-actions compact-actions">
             <button id="compareHoldBtn" type="button" title="Hold pointer or Space for temporary compare.">Compare</button>
             <button id="compareLockBtn" type="button" class="secondary-btn" title="Lock/unlock original compare view" aria-pressed="false">Lock compare</button>
@@ -262,7 +235,7 @@
         <section class="panel side-title-panel">
           <header class="panel-header">Effect stack</header>
           <div class="panel-body">
-            <p class="workspace-intro">Core render effects are grouped by workflow: grading, display simulation, digital encoding, film texture, artifacts, and overlays.</p>
+            <p class="workspace-intro">Core render effects are grouped by workflow: grading, masking, display simulation, digital encoding, film texture, artifacts, and overlays.</p>
           </div>
         </section>
         <section class="panel panel-collapsible" id="imageControlsPanel" aria-label="Image controls">
@@ -278,9 +251,40 @@
           </div>
         </section>
 
+        <section class="panel panel-collapsible" id="masksPanel" aria-label="Mask effects">
+          <header class="panel-header panel-header-toggle">
+            <span class="stack-badge">2</span><span>Mask effects</span>
+            <label class="panel-toggle"><input id="masksEnabled" type="checkbox" checked /> Enabled</label>
+          </header>
+          <div class="panel-body quick-grid panel-grid-2">
+            <label class="panel-span-2">Mask pattern
+              <div id="maskType" class="selection-box selection-box-wrap" role="radiogroup" aria-label="Mask pattern">
+                <button type="button" data-value="phosphor" data-selected="true">Phosphor triad</button>
+                <button type="button" data-value="aperture">Aperture grille</button>
+                <button type="button" data-value="slot">Slot mask</button>
+                <button type="button" data-value="dot">Dot mask</button>
+                <button type="button" data-value="shadowMask">Shadow mask</button>
+                <button type="button" data-value="lcdStripeRGB">LCD stripe RGB</button>
+                <button type="button" data-value="oledPentile">OLED pentile</button>
+                <button type="button" data-value="plasmaCell">Plasma cell</button>
+                <button type="button" data-value="filmSuper8">Super 8 stock</button>
+                <button type="button" data-value="film16mm">16mm stock</button>
+                <button type="button" data-value="instantDyeCloud">Instant dye cloud</button>
+                <button type="button" data-value="irBloomSpeckle">IR bloom speckle</button>
+                <button type="button" data-value="cmosRollingColumn">CMOS rolling column</button>
+                <button type="button" data-value="lowBitrateBlockGrid">Low-bitrate block grid</button>
+                <button type="button" data-value="fisheyeMicrolens">Fisheye microlens</button>
+                <button type="button" data-value="none">None</button>
+              </div>
+            </label>
+            <label>Mask strength <span class="range-control"><input id="phosphorMask" type="range" min="0" max="1" step="0.01" value="0.5" /></span></label>
+            <label>Mask scale <span class="range-control"><input id="maskScale" type="range" min="0.25" max="3" step="0.01" value="1" /></span></label>
+          </div>
+        </section>
+
         <section class="panel panel-collapsible" id="crtEffectsPanel" aria-label="CRT effects">
           <header class="panel-header panel-header-toggle">
-            <span class="stack-badge">2</span><span>CRT effects</span>
+            <span class="stack-badge">3</span><span>CRT effects</span>
             <label class="panel-toggle"><input id="crtEffectsEnabled" type="checkbox" checked /> Enabled</label>
           </header>
           <div class="panel-body quick-grid panel-grid-2">
@@ -296,7 +300,7 @@
 
         <section class="panel panel-collapsible" id="digitalEffectsPanel" aria-label="Digital effects">
           <header class="panel-header panel-header-toggle">
-            <span class="stack-badge">3</span><span>Digital effects</span>
+            <span class="stack-badge">4</span><span>Digital effects</span>
             <label class="panel-toggle"><input id="digitalEffectsEnabled" type="checkbox" checked /> Enabled</label>
           </header>
           <div class="panel-body quick-grid panel-grid-2">
@@ -317,7 +321,7 @@
 
         <section class="panel panel-collapsible" id="filmEffectsPanel" aria-label="Film effects">
           <header class="panel-header panel-header-toggle">
-            <span class="stack-badge">4</span><span>Film effects</span>
+            <span class="stack-badge">5</span><span>Film effects</span>
             <label class="panel-toggle"><input id="filmEffectsEnabled" type="checkbox" checked /> Enabled</label>
           </header>
           <div class="panel-body quick-grid panel-grid-2">
@@ -338,7 +342,7 @@
         </section>
 
         <section class="panel panel-collapsible" id="artifactsPanel">
-            <header class="panel-header"><span class="stack-badge">5</span><span>Additional video artifacts</span></header>
+            <header class="panel-header"><span class="stack-badge">6</span><span>Additional video artifacts</span></header>
             <div class="panel-body controls-grid panel-grid-2">
               <label>Pixel size <input id="pixelSize" type="number" min="1" max="8" step="1" value="1" /></label>
               <label>Line jitter <span class="range-control"><input id="advancedLineJitter" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
@@ -359,7 +363,7 @@
         </section>
 
         <section class="panel panel-collapsible" id="osdPanel">
-            <header class="panel-header"><span class="stack-badge">6</span><span>Overlays & OSD</span></header>
+            <header class="panel-header"><span class="stack-badge">7</span><span>Overlays & OSD</span></header>
             <div class="panel-body">
               <label>Timestamp intensity <span class="range-control"><input id="advancedTimestampOSD" type="range" min="0" max="1" step="0.01" value="0" /></span></label>
               <label>OSD bloom <span class="range-control"><input id="osdBloom" type="range" min="0" max="1" step="0.01" value="0.35" /></span></label>
