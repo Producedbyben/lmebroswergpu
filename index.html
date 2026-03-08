@@ -149,6 +149,16 @@
             <button type="button" class="secondary-btn" data-jump-target="exportDock" title="Jump to export controls (Alt+4)">Export</button>
           </div>
 
+          <section class="toolbar-theme-strip" aria-label="Theme controls">
+            <label>Theme
+              <div id="themeMode" class="selection-box selection-inline" role="radiogroup" aria-label="Color theme">
+                <button type="button" data-value="midnight" data-selected="true">Midnight</button>
+                <button type="button" data-value="graphite">Graphite</button>
+                <button type="button" data-value="classic">Classic</button>
+              </div>
+            </label>
+          </section>
+
           <div class="workspace-toolbar-grid">
             <section class="toolbar-cluster toolbar-cluster-preview" aria-label="Preview controls cluster">
               <label>Preview mode
@@ -172,6 +182,13 @@
                 <div id="densityMode" class="selection-box selection-inline" role="radiogroup" aria-label="Control density mode">
                   <button type="button" data-value="comfortable" data-selected="true">Comfortable</button>
                   <button type="button" data-value="compact">Compact</button>
+                </div>
+              </label>
+              <label>Theme
+                <div id="themeMode" class="selection-box selection-inline" role="radiogroup" aria-label="Color theme">
+                  <button type="button" data-value="midnight" data-selected="true">Midnight</button>
+                  <button type="button" data-value="graphite">Graphite</button>
+                  <button type="button" data-value="classic">Classic</button>
                 </div>
               </label>
               <div class="history-actions" aria-label="Look history controls">
