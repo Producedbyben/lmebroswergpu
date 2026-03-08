@@ -3526,6 +3526,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   const osdStyleInput = document.getElementById("advancedOSDStyle");
   const compareHoldBtn = document.getElementById("compareHoldBtn");
   const compareLockBtn = document.getElementById("compareLockBtn");
+  const compareSplitEnabledInput = document.getElementById("compareSplitEnabled");
   const presetDirtyTag = document.getElementById("presetDirtyTag");
   const presetIntensityInput = document.getElementById("presetIntensity");
   const presetCategoryFilter = document.getElementById("presetCategoryFilter");
@@ -3641,6 +3642,9 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   let previewDirty = true;
   let showOriginalPreview = false;
   let compareLocked = false;
+  let compareSplitEnabled = false;
+  let compareSplitRatio = 0.5;
+  let isDraggingCompareSplit = false;
   let activePresetName = null;
   const presetIntensityProfiles = new Map();
   const presetCategories = new Map();
@@ -4327,6 +4331,23 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
       }
     }
     return { width, height };
+  }
+
+
+  function getActiveSourceElement() {
+    return loadedSourceType === "video" ? loadedVideo?.video : loadedImage;
+  }
+
+  function getSourceDrawRect(source = getActiveSourceElement()) {
+    if (!source) return null;
+    const srcW = source.videoWidth || source.naturalWidth || canvas.width;
+    const srcH = source.videoHeight || source.naturalHeight || canvas.height;
+    const scale = Math.min(canvas.width / srcW, canvas.height / srcH);
+    const drawW = Math.max(1, Math.round(srcW * scale));
+    const drawH = Math.max(1, Math.round(srcH * scale));
+    const drawX = Math.round((canvas.width - drawW) / 2);
+    const drawY = Math.round((canvas.height - drawH) / 2);
+    return { srcW, srcH, drawX, drawY, drawW, drawH };
   }
 
   function refreshRendererSource() {
@@ -5193,21 +5214,100 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     const shouldRender = previewDirty;
     if (shouldRender) {
       const frameStart = performance.now();
-      if (showOriginalPreview && renderer.hasImage) {
-        const source = loadedSourceType === "video" ? loadedVideo?.video : loadedImage;
+      if ((showOriginalPreview || compareSplitEnabled) && renderer.hasImage) {
+        const source = getActiveSourceElement();
         if (source) {
+          const drawRect = getSourceDrawRect(source);
+          if (!drawRect) {
+            requestAnimationFrame(animate);
+            return;
+          }
+          const { srcW, srcH, drawX, drawY, drawW, drawH } = drawRect;
+
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           ctx.fillStyle = "black";
           ctx.fillRect(0, 0, canvas.width, canvas.height);
-          const srcW = source.videoWidth || source.naturalWidth || canvas.width;
-          const srcH = source.videoHeight || source.naturalHeight || canvas.height;
-          const scale = Math.min(canvas.width / srcW, canvas.height / srcH);
-          const drawW = Math.max(1, Math.round(srcW * scale));
-          const drawH = Math.max(1, Math.round(srcH * scale));
-          ctx.drawImage(source, (canvas.width - drawW) / 2, (canvas.height - drawH) / 2, drawW, drawH);
+
+          if (!compareSplitEnabled) {
+            ctx.drawImage(source, drawX, drawY, drawW, drawH);
+            previewDirty = false;
+            if (debugRenderDiagnostics) {
+              diagnostics.commit({ frameMs: performance.now() - frameStart, uploadMs: 0, presentMs: 0, latencyMs: now - start });
+            }
+            requestAnimationFrame(animate);
+            return;
+          }
+
+          const splitX = drawX + Math.round(drawW * compareSplitRatio);
+          const leftWidth = Math.max(0, splitX - drawX);
+          const rightWidth = Math.max(0, drawW - leftWidth);
+
+          const srcSplitX = Math.max(0, Math.min(srcW, Math.round(srcW * compareSplitRatio)));
+          if (leftWidth > 0 && srcSplitX > 0) {
+            ctx.drawImage(source, 0, 0, srcSplitX, srcH, drawX, drawY, leftWidth, drawH);
+          }
+
+          const { width: previewWidth, height: previewHeight } = getPreviewRenderSize();
+          let renderMetrics = { uploadMs: 0, presentMs: 0 };
+          if (previewWidth !== canvas.width || previewHeight !== canvas.height) {
+            if (previewBuffer.width !== previewWidth) previewBuffer.width = previewWidth;
+            if (previewBuffer.height !== previewHeight) previewBuffer.height = previewHeight;
+            const previewCtx = previewBuffer.getContext("2d", { alpha: false, desynchronized: true });
+            renderMetrics = renderer.render(previewCtx, previewBuffer.width, previewBuffer.height, frame / fps, readParams(), frame, fps, readOSDOptions(loadedSourceType === "video" ? previewFrameSeconds : frame / fps)) || renderMetrics;
+          }
+
+          if (rightWidth > 0) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(splitX, drawY, rightWidth, drawH);
+            ctx.clip();
+            if (previewWidth === canvas.width && previewHeight === canvas.height) {
+              renderMetrics = renderer.render(ctx, canvas.width, canvas.height, frame / fps, readParams(), frame, fps, readOSDOptions(loadedSourceType === "video" ? previewFrameSeconds : frame / fps)) || renderMetrics;
+            } else {
+              ctx.imageSmoothingEnabled = true;
+              ctx.imageSmoothingQuality = "high";
+              ctx.drawImage(previewBuffer, 0, 0, canvas.width, canvas.height);
+            }
+            ctx.restore();
+          }
+
+          ctx.save();
+          ctx.strokeStyle = "rgba(226, 237, 255, 0.95)";
+          ctx.lineWidth = 2;
+          ctx.shadowColor = "rgba(20, 32, 48, 0.75)";
+          ctx.shadowBlur = 2;
+          ctx.beginPath();
+          ctx.moveTo(splitX + 0.5, drawY);
+          ctx.lineTo(splitX + 0.5, drawY + drawH);
+          ctx.stroke();
+
+          const handleY = drawY + Math.round(drawH / 2);
+          const handleOuterRadius = 16;
+          const handleInnerRadius = 11;
+          ctx.fillStyle = "rgba(20, 32, 48, 0.9)";
+          ctx.beginPath();
+          ctx.arc(splitX, handleY, handleOuterRadius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = "rgba(226, 237, 255, 0.95)";
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(splitX, handleY, handleInnerRadius, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.fillStyle = "rgba(226, 237, 255, 0.95)";
+          ctx.font = "bold 14px system-ui, sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText("↔", splitX, handleY + 0.5);
+          ctx.restore();
+
           previewDirty = false;
           if (debugRenderDiagnostics) {
-            diagnostics.commit({ frameMs: performance.now() - frameStart, uploadMs: 0, presentMs: 0, latencyMs: now - start });
+            diagnostics.commit({
+              frameMs: performance.now() - frameStart,
+              uploadMs: renderMetrics.uploadMs || 0,
+              presentMs: renderMetrics.presentMs || 0,
+              latencyMs: now - start,
+            });
           }
           requestAnimationFrame(animate);
           return;
@@ -5782,6 +5882,49 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   });
   compareHoldBtn?.addEventListener("blur", () => {
     if (!compareLocked) setCompareState(false, { lock: false });
+  });
+
+  compareSplitEnabledInput?.addEventListener("change", (event) => {
+    compareSplitEnabled = !!event.target.checked;
+    canvas.style.cursor = compareSplitEnabled ? "ew-resize" : "";
+    markPreviewDirty();
+    setStatus(compareSplitEnabled ? "Split compare enabled." : "Split compare disabled.", "info");
+  });
+
+  function updateCompareSplitFromEvent(event) {
+    if (!compareSplitEnabled) return;
+    const sourceRect = getSourceDrawRect();
+    if (!sourceRect) return;
+    const rect = canvas.getBoundingClientRect();
+    if (!rect.width) return;
+    const canvasX = ((event.clientX - rect.left) / rect.width) * canvas.width;
+    const ratio = (canvasX - sourceRect.drawX) / sourceRect.drawW;
+    compareSplitRatio = Math.min(1, Math.max(0, ratio));
+    markPreviewDirty();
+  }
+
+  canvas.addEventListener("pointerdown", (event) => {
+    if (!compareSplitEnabled) return;
+    isDraggingCompareSplit = true;
+    canvas.setPointerCapture?.(event.pointerId);
+    updateCompareSplitFromEvent(event);
+  });
+
+  canvas.addEventListener("pointermove", (event) => {
+    if (!isDraggingCompareSplit) return;
+    updateCompareSplitFromEvent(event);
+  });
+
+  canvas.addEventListener("pointerup", (event) => {
+    if (!isDraggingCompareSplit) return;
+    isDraggingCompareSplit = false;
+    canvas.releasePointerCapture?.(event.pointerId);
+  });
+
+  canvas.addEventListener("pointercancel", (event) => {
+    if (!isDraggingCompareSplit) return;
+    isDraggingCompareSplit = false;
+    canvas.releasePointerCapture?.(event.pointerId);
   });
 
   window.addEventListener("keydown", (event) => {

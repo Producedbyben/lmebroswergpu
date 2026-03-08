@@ -428,7 +428,9 @@ canvas {
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.4);
 }
 
-.timeline-row { display: grid; grid-template-columns: 1.4fr 120px 1fr; gap: 0.52rem; align-items: end; }
+.timeline-row { display: grid; grid-template-columns: 1.4fr 120px 1fr auto; gap: 0.52rem; align-items: end; }
+.preview-compare-split-toggle { align-self: end; margin-bottom: 0.08rem; white-space: nowrap; }
+.preview-compare-split-toggle input { width: auto; }
 
 .export-dock {
   position: relative;
