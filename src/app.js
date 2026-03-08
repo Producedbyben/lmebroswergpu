@@ -3544,6 +3544,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   const presetFilterMeta = document.getElementById("presetFilterMeta");
   const exportEstimateEl = document.getElementById("exportEstimate");
   const densityModeRoot = document.getElementById("densityMode");
+  const themeModeRoot = document.getElementById("themeMode");
   const undoLookBtn = document.getElementById("undoLookBtn");
   const redoLookBtn = document.getElementById("redoLookBtn");
   const debugRenderDiagnostics = /[?&]debugRender=1/.test(window.location.search);
@@ -4260,6 +4261,41 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     const normalized = stored === "compact" ? "compact" : "comfortable";
     densityControl.setValue(normalized, { silent: true });
     setDensity(normalized);
+  }
+
+  function setupThemeMode() {
+    const storageKey = "crt-ui-theme";
+    const validThemes = new Set(["midnight", "graphite", "classic"]);
+
+    const setTheme = (value) => {
+      const theme = validThemes.has(value) ? value : "midnight";
+      document.body.dataset.theme = theme;
+      try {
+        localStorage.setItem(storageKey, theme);
+      } catch {
+        // No-op if storage is not available.
+      }
+    };
+
+    const themeControl = setupSelectionBox("themeMode", {
+      onChange: (value) => setTheme(value),
+    });
+
+    if (!themeModeRoot) {
+      setTheme("midnight");
+      return;
+    }
+
+    let stored = "midnight";
+    try {
+      stored = localStorage.getItem(storageKey) || "midnight";
+    } catch {
+      stored = "midnight";
+    }
+
+    const normalized = validThemes.has(stored) ? stored : "midnight";
+    themeControl.setValue(normalized, { silent: true });
+    setTheme(normalized);
   }
 
   function setStatus(message, mode = "info") {
@@ -6105,6 +6141,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   setupTabs();
   setupQuickJumps();
   setupDensityMode();
+  setupThemeMode();
 
   setExportAvailability();
   loadParameterPolicyState();

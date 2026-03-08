@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <a class="skip-link" href="#previewPanel">Skip to preview workspace</a>
     <main class="app">
       <aside class="left-rail">
         <section class="app-brand panel">
@@ -167,6 +168,13 @@
                   <button type="button" data-value="compact">Compact</button>
                 </div>
               </label>
+              <label>Theme
+                <div id="themeMode" class="selection-box selection-inline" role="radiogroup" aria-label="Color theme">
+                  <button type="button" data-value="midnight" data-selected="true">Midnight</button>
+                  <button type="button" data-value="graphite">Graphite</button>
+                  <button type="button" data-value="classic">Classic</button>
+                </div>
+              </label>
               <div class="history-actions" aria-label="Look history controls">
                 <button id="undoLookBtn" type="button" class="secondary-btn" title="Undo look change (Ctrl/Cmd+Z)">Undo</button>
                 <button id="redoLookBtn" type="button" class="secondary-btn" title="Redo look change (Ctrl/Cmd+Shift+Z or Ctrl/Cmd+Y)">Redo</button>
@@ -187,7 +195,7 @@
           </div>
         </header>
 
-        <section class="preview panel" id="previewPanel">
+        <section class="preview panel" id="previewPanel" tabindex="-1" aria-label="Preview canvas and playback controls">
           <canvas id="previewCanvas" width="960" height="540"></canvas>
           <div class="timeline-row">
             <label>Preview frame (s)
@@ -248,8 +256,8 @@
           </div>
           <p id="exportEstimate" class="export-note">Export summary: 120 frames at 30 FPS (4.0s).</p>
           <p class="export-note">Audio passthrough uses realtime WebM export for best compatibility.</p>
-          <div id="status" class="status">Load an image to begin.</div>
-          <progress id="progress" max="1" value="0"></progress>
+          <div id="status" class="status" role="status" aria-live="polite">Load an image to begin.</div>
+          <progress id="progress" max="1" value="0" aria-label="Export progress"></progress>
         </footer>
       </section>
 
