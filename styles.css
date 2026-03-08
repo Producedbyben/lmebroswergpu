@@ -2585,3 +2585,42 @@ body[data-theme="paper"] .preview-quick-actions button:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+/* --- Widescreen balance pass: remove large horizontal voids in top toolbar --- */
+.workspace-toolbar-grid {
+  grid-template-columns: minmax(0, 2.15fr) minmax(0, 1.25fr) minmax(0, 0.95fr);
+  justify-content: stretch;
+  align-items: stretch;
+}
+
+.toolbar-cluster-preview,
+.toolbar-cluster-session,
+.toolbar-cluster-compare {
+  width: 100%;
+}
+
+.toolbar-cluster-session .history-actions {
+  width: 100%;
+}
+
+.toolbar-cluster-compare .compare-actions {
+  width: 100%;
+  grid-template-columns: 1fr;
+}
+
+.toolbar-cluster-compare .compare-actions button {
+  width: 100%;
+  min-width: 0;
+}
+
+.preview-quick-actions {
+  width: 100%;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  justify-content: stretch;
+}
+
+@media (max-width: 1500px) {
+  .workspace-toolbar-grid {
+    grid-template-columns: 1.4fr 1fr 0.95fr;
+  }
+}
