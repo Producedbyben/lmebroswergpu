@@ -125,53 +125,65 @@
 
       <section class="preview-workspace" aria-label="Preview and export workspace">
         <header class="workspace-toolbar panel">
-          <div class="toolbar-left">
-            <label>Preview mode
-              <div id="previewMode" class="selection-box" role="radiogroup" aria-label="Preview mode">
-                <button type="button" data-value="still" data-selected="true">Still</button>
-                <button type="button" data-value="playback">Playback</button>
-              </div>
-            </label>
-            <label>Preview scale
-              <div id="previewScale" class="selection-box selection-inline" role="radiogroup" aria-label="Preview scale">
-                <button type="button" data-value="1" data-selected="true">100%</button>
-                <button type="button" data-value="0.75">75%</button>
-                <button type="button" data-value="0.5">50%</button>
-                <button type="button" data-value="0.33">33%</button>
-              </div>
-            </label>
-            <label>Source downsample
-              <div id="sourceScale" class="selection-box selection-inline" role="radiogroup" aria-label="Source downsample">
-                <button type="button" data-value="1" data-selected="true">100%</button>
-                <button type="button" data-value="0.75">75%</button>
-                <button type="button" data-value="0.5">50%</button>
-                <button type="button" data-value="0.33">33%</button>
-                <button type="button" data-value="0.25">25%</button>
-              </div>
-            </label>
+          <div class="workspace-top-tabs app-workflow" role="group" aria-label="Workspace stages">
+            <button type="button" class="secondary-btn" data-jump-target="importPanel" title="Jump to import controls (Alt+1)">Import</button>
+            <button type="button" class="secondary-btn" data-jump-target="presetsPanel" title="Jump to preset controls (Alt+2)">Preset</button>
+            <button type="button" class="secondary-btn" data-jump-target="imageControlsPanel" title="Jump to grading controls">Develop</button>
+            <button type="button" class="secondary-btn" data-jump-target="crtEffectsPanel" title="Jump to tuning controls (Alt+3)">Effects</button>
+            <button type="button" class="secondary-btn" data-jump-target="exportDock" title="Jump to export controls (Alt+4)">Export</button>
           </div>
-          <div class="toolbar-center top-utility-strip">
-            <div class="app-workflow app-workflow-toolbar" role="group" aria-label="Workflow guide quick actions">
-              <button type="button" class="secondary-btn" data-jump-target="importPanel" title="Jump to import controls (Alt+1)">Import</button>
-              <button type="button" class="secondary-btn" data-jump-target="presetsPanel" title="Jump to preset controls (Alt+2)">Preset</button>
-              <button type="button" class="secondary-btn" data-jump-target="crtEffectsPanel" title="Jump to tuning controls (Alt+3)">Tune</button>
-              <button type="button" class="secondary-btn" data-jump-target="exportDock" title="Jump to export controls (Alt+4)">Export</button>
-            </div>
-            <div class="toolbar-session" aria-label="Session and history controls">
-              <div id="densityMode" class="selection-box selection-inline" role="radiogroup" aria-label="Control density mode">
-                <button type="button" data-value="comfortable" data-selected="true">Comfortable</button>
-                <button type="button" data-value="compact">Compact</button>
-              </div>
+
+          <div class="workspace-toolbar-grid">
+            <section class="toolbar-cluster toolbar-cluster-preview" aria-label="Preview controls cluster">
+              <label>Preview mode
+                <div id="previewMode" class="selection-box" role="radiogroup" aria-label="Preview mode">
+                  <button type="button" data-value="still" data-selected="true">Still</button>
+                  <button type="button" data-value="playback">Playback</button>
+                </div>
+              </label>
+              <label>Preview scale
+                <div id="previewScale" class="selection-box selection-inline" role="radiogroup" aria-label="Preview scale">
+                  <button type="button" data-value="1" data-selected="true">100%</button>
+                  <button type="button" data-value="0.75">75%</button>
+                  <button type="button" data-value="0.5">50%</button>
+                  <button type="button" data-value="0.33">33%</button>
+                </div>
+              </label>
+              <label>Source downsample
+                <div id="sourceScale" class="selection-box selection-inline" role="radiogroup" aria-label="Source downsample">
+                  <button type="button" data-value="1" data-selected="true">100%</button>
+                  <button type="button" data-value="0.75">75%</button>
+                  <button type="button" data-value="0.5">50%</button>
+                  <button type="button" data-value="0.33">33%</button>
+                  <button type="button" data-value="0.25">25%</button>
+                </div>
+              </label>
+            </section>
+
+            <section class="toolbar-cluster toolbar-cluster-session" aria-label="Session and history controls cluster">
+              <label>Control density
+                <div id="densityMode" class="selection-box selection-inline" role="radiogroup" aria-label="Control density mode">
+                  <button type="button" data-value="comfortable" data-selected="true">Comfortable</button>
+                  <button type="button" data-value="compact">Compact</button>
+                </div>
+              </label>
               <div class="history-actions" aria-label="Look history controls">
                 <button id="undoLookBtn" type="button" class="secondary-btn" title="Undo look change (Ctrl/Cmd+Z)">Undo</button>
                 <button id="redoLookBtn" type="button" class="secondary-btn" title="Redo look change (Ctrl/Cmd+Shift+Z or Ctrl/Cmd+Y)">Redo</button>
               </div>
-            </div>
-          </div>
-          <div class="toolbar-right compare-actions compact-actions">
-            <button id="compareHoldBtn" type="button" title="Hold pointer or Space for temporary compare.">Compare</button>
-            <button id="compareLockBtn" type="button" class="secondary-btn" title="Lock/unlock original compare view" aria-pressed="false">Lock compare</button>
-            <button id="downloadStillBtn" type="button">Download still</button>
+              <div class="history-actions toolbar-basic-actions" aria-label="Basic source/look actions">
+                <button id="quickResetSourceBtn" type="button" class="secondary-btn" title="Reset imported source">Reset source</button>
+                <button id="quickResetLookBtn" type="button" class="secondary-btn" title="Reset look controls">Reset look</button>
+              </div>
+            </section>
+
+            <section class="toolbar-cluster toolbar-cluster-compare" aria-label="Compare and capture controls cluster">
+              <div class="compare-actions compact-actions">
+                <button id="compareHoldBtn" type="button" title="Hold pointer or Space for temporary compare.">Compare</button>
+                <button id="compareLockBtn" type="button" class="secondary-btn" title="Lock/unlock original compare view" aria-pressed="false">Lock compare</button>
+                <button id="downloadStillBtn" type="button">Download still</button>
+              </div>
+            </section>
           </div>
         </header>
 
