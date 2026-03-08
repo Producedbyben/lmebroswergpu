@@ -41,6 +41,15 @@
               <span>Image / Video source</span>
               <input id="imageInput" type="file" accept="image/*,video/*,.mov,.webm,.mp4" />
             </label>
+            <label>Import downsample
+              <div id="sourceScale" class="selection-box selection-inline" role="radiogroup" aria-label="Import downsample">
+                <button type="button" data-value="1" data-selected="true">100%</button>
+                <button type="button" data-value="0.75">75%</button>
+                <button type="button" data-value="0.5">50%</button>
+                <button type="button" data-value="0.33">33%</button>
+                <button type="button" data-value="0.25">25%</button>
+              </div>
+            </label>
             <div class="actions compact-actions">
               <button id="resetSourceBtn" type="button">Reset source</button>
             </div>
@@ -149,15 +158,6 @@
                   <button type="button" data-value="0.33">33%</button>
                 </div>
               </label>
-              <label>Source downsample
-                <div id="sourceScale" class="selection-box selection-inline" role="radiogroup" aria-label="Source downsample">
-                  <button type="button" data-value="1" data-selected="true">100%</button>
-                  <button type="button" data-value="0.75">75%</button>
-                  <button type="button" data-value="0.5">50%</button>
-                  <button type="button" data-value="0.33">33%</button>
-                  <button type="button" data-value="0.25">25%</button>
-                </div>
-              </label>
             </section>
 
             <section class="toolbar-cluster toolbar-cluster-session" aria-label="Session and history controls cluster">
@@ -229,6 +229,15 @@
                 <button type="button" data-value="1080">1080p</button>
                 <button type="button" data-value="720">720p</button>
                 <button type="button" data-value="480">480p</button>
+              </div>
+            </label>
+            <label>Render mode (video + still)
+              <div id="stillRenderQuality" class="selection-box selection-inline" role="radiogroup" aria-label="Render mode">
+                <button type="button" data-value="match-preview">Match preview</button>
+                <button type="button" data-value="307200">Fast</button>
+                <button type="button" data-value="921600">Balanced</button>
+                <button type="button" data-value="2073600">High</button>
+                <button type="button" data-value="0" data-selected="true">Unlimited</button>
               </div>
             </label>
             <label class="checkbox-row dock-audio"><input id="includeOriginalAudio" type="checkbox" /> Include original audio</label>

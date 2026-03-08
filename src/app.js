@@ -1943,19 +1943,29 @@ class CRTRenderer {
     fitCtx.imageSmoothingQuality = "high";
 
     const src = this.sourceCanvas;
-    const srcAspect = src.width / src.height;
-    const dstAspect = width / height;
+    const sourceView = renderOptions?.sourceView || null;
     let sw = src.width;
     let sh = src.height;
     let sx = 0;
     let sy = 0;
 
-    if (srcAspect > dstAspect) {
-      sw = src.height * dstAspect;
-      sx = (src.width - sw) / 2;
+    if (sourceView && Number.isFinite(sourceView.width) && Number.isFinite(sourceView.height)) {
+      const viewW = Math.max(0.05, Math.min(1, Number(sourceView.width) || 1));
+      const viewH = Math.max(0.05, Math.min(1, Number(sourceView.height) || 1));
+      sw = Math.max(1, Math.round(src.width * viewW));
+      sh = Math.max(1, Math.round(src.height * viewH));
+      sx = Math.max(0, Math.min(src.width - sw, Math.round(src.width * (Number(sourceView.x) || 0))));
+      sy = Math.max(0, Math.min(src.height - sh, Math.round(src.height * (Number(sourceView.y) || 0))));
     } else {
-      sh = src.width / dstAspect;
-      sy = (src.height - sh) / 2;
+      const srcAspect = src.width / src.height;
+      const dstAspect = width / height;
+      if (srcAspect > dstAspect) {
+        sw = src.height * dstAspect;
+        sx = (src.width - sw) / 2;
+      } else {
+        sh = src.width / dstAspect;
+        sy = (src.height - sh) / 2;
+      }
     }
 
     fitCtx.drawImage(src, sx, sy, sw, sh, 0, 0, width, height);
@@ -3645,6 +3655,11 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   let compareSplitEnabled = false;
   let compareSplitRatio = 0.5;
   let isDraggingCompareSplit = false;
+  let previewPanCenterX = 0.5;
+  let previewPanCenterY = 0.5;
+  let isDraggingPreviewPan = false;
+  let previewPanPointerId = null;
+  let importedSourceScale = 1;
   let activePresetName = null;
   const presetIntensityProfiles = new Map();
   const presetCategories = new Map();
@@ -4292,6 +4307,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   let exportResolutionControl;
   let osdFontPresetControl;
   let osdStyleControl;
+  let stillRenderQualityControl;
 
   function isStillPreviewMode() {
     return previewModeControl?.getValue() === "still";
@@ -4302,7 +4318,8 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   }
 
   function getSourceScale() {
-    return Math.max(0.1, Number(sourceScaleControl?.getValue()) || 1);
+    if (hasLoadedSource) return Math.max(0.1, Math.min(1, Number(importedSourceScale) || 1));
+    return Math.max(0.1, Math.min(1, Number(sourceScaleControl?.getValue()) || 1));
   }
 
   function getPreviewMaxPixels() {
@@ -4313,14 +4330,24 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     return Math.max(0, Number(exportResolutionControl?.getValue()) || 0);
   }
 
+  function getSelectedRenderModeValue() {
+    return document.getElementById("stillRenderQuality")?.querySelector('button[data-selected="true"]')?.dataset.value || "0";
+  }
+
+  function getSelectedRenderMaxPixels() {
+    const mode = getSelectedRenderModeValue();
+    return mode === "match-preview" ? getPreviewMaxPixels() : Math.max(0, Number(mode) || 0);
+  }
+
   function markPreviewDirty() {
     previewDirty = true;
   }
 
   function getPreviewRenderSize() {
-    const scale = getPreviewScale();
-    let width = Math.max(1, Math.round(canvas.width * scale));
-    let height = Math.max(1, Math.round(canvas.height * scale));
+    const sourceSize = getPipelineSourceSize();
+    const view = getPreviewView();
+    let width = Math.max(1, Math.round(sourceSize.width * view.width));
+    let height = Math.max(1, Math.round(sourceSize.height * view.height));
     const maxPixels = getPreviewMaxPixels();
     if (maxPixels > 0) {
       const pixels = width * height;
@@ -4338,16 +4365,47 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     return loadedSourceType === "video" ? loadedVideo?.video : loadedImage;
   }
 
+  function getPipelineSourceSize(source = getActiveSourceElement()) {
+    if (!source) return { width: canvas.width, height: canvas.height };
+    const srcW = source.videoWidth || source.naturalWidth || source.width || canvas.width;
+    const srcH = source.videoHeight || source.naturalHeight || source.height || canvas.height;
+    const scaledW = Math.max(1, Math.round(srcW * getSourceScale()));
+    const scaledH = Math.max(1, Math.round(srcH * getSourceScale()));
+    return { width: scaledW, height: scaledH };
+  }
+
+  function getPreviewView() {
+    const viewWidth = Math.max(0.1, Math.min(1, getPreviewScale()));
+    const viewHeight = viewWidth;
+    const halfW = viewWidth * 0.5;
+    const halfH = viewHeight * 0.5;
+    const centerX = Math.max(halfW, Math.min(1 - halfW, previewPanCenterX));
+    const centerY = Math.max(halfH, Math.min(1 - halfH, previewPanCenterY));
+    previewPanCenterX = centerX;
+    previewPanCenterY = centerY;
+    return {
+      x: centerX - halfW,
+      y: centerY - halfH,
+      width: viewWidth,
+      height: viewHeight,
+    };
+  }
+
   function getSourceDrawRect(source = getActiveSourceElement()) {
     if (!source) return null;
     const srcW = source.videoWidth || source.naturalWidth || canvas.width;
     const srcH = source.videoHeight || source.naturalHeight || canvas.height;
-    const scale = Math.min(canvas.width / srcW, canvas.height / srcH);
-    const drawW = Math.max(1, Math.round(srcW * scale));
-    const drawH = Math.max(1, Math.round(srcH * scale));
+    const view = getPreviewView();
+    const cropW = Math.max(1, Math.round(srcW * view.width));
+    const cropH = Math.max(1, Math.round(srcH * view.height));
+    const cropX = Math.max(0, Math.min(srcW - cropW, Math.round(srcW * view.x)));
+    const cropY = Math.max(0, Math.min(srcH - cropH, Math.round(srcH * view.y)));
+    const scale = Math.min(canvas.width / cropW, canvas.height / cropH);
+    const drawW = Math.max(1, Math.round(cropW * scale));
+    const drawH = Math.max(1, Math.round(cropH * scale));
     const drawX = Math.round((canvas.width - drawW) / 2);
     const drawY = Math.round((canvas.height - drawH) / 2);
-    return { srcW, srcH, drawX, drawY, drawW, drawH };
+    return { srcW, srcH, cropX, cropY, cropW, cropH, drawX, drawY, drawW, drawH };
   }
 
   function refreshRendererSource() {
@@ -4527,7 +4585,6 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
       }
     }
     enforceDisabledEffectPanels();
-    sourceScaleControl?.setValue("1", { silent: true });
     if (presetIntensityInput) {
       presetIntensityInput.value = "1";
       presetIntensityInput.__syncRangeNumber?.();
@@ -4583,6 +4640,8 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    importedSourceScale = 1;
+    sourceScaleControl?.setValue("1", { silent: true });
     imageInput.value = "";
     document.getElementById("duration").value = "4";
     previewTargetSeconds = 0;
@@ -5222,14 +5281,14 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
             requestAnimationFrame(animate);
             return;
           }
-          const { srcW, srcH, drawX, drawY, drawW, drawH } = drawRect;
+          const { cropX, cropY, cropW, cropH, drawX, drawY, drawW, drawH } = drawRect;
 
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           ctx.fillStyle = "black";
           ctx.fillRect(0, 0, canvas.width, canvas.height);
 
           if (!compareSplitEnabled) {
-            ctx.drawImage(source, drawX, drawY, drawW, drawH);
+            ctx.drawImage(source, cropX, cropY, cropW, cropH, drawX, drawY, drawW, drawH);
             previewDirty = false;
             if (debugRenderDiagnostics) {
               diagnostics.commit({ frameMs: performance.now() - frameStart, uploadMs: 0, presentMs: 0, latencyMs: now - start });
@@ -5242,9 +5301,10 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
           const leftWidth = Math.max(0, splitX - drawX);
           const rightWidth = Math.max(0, drawW - leftWidth);
 
-          const srcSplitX = Math.max(0, Math.min(srcW, Math.round(srcW * compareSplitRatio)));
-          if (leftWidth > 0 && srcSplitX > 0) {
-            ctx.drawImage(source, 0, 0, srcSplitX, srcH, drawX, drawY, leftWidth, drawH);
+          if (leftWidth > 0) {
+            const croppedSplitX = Math.max(cropX, Math.min(cropX + cropW, cropX + Math.round(cropW * compareSplitRatio)));
+            const leftCropWidth = Math.max(0, croppedSplitX - cropX);
+            if (leftCropWidth > 0) ctx.drawImage(source, cropX, cropY, leftCropWidth, cropH, drawX, drawY, leftWidth, drawH);
           }
 
           const { width: previewWidth, height: previewHeight } = getPreviewRenderSize();
@@ -5253,7 +5313,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
             if (previewBuffer.width !== previewWidth) previewBuffer.width = previewWidth;
             if (previewBuffer.height !== previewHeight) previewBuffer.height = previewHeight;
             const previewCtx = previewBuffer.getContext("2d", { alpha: false, desynchronized: true });
-            renderMetrics = renderer.render(previewCtx, previewBuffer.width, previewBuffer.height, frame / fps, readParams(), frame, fps, readOSDOptions(loadedSourceType === "video" ? previewFrameSeconds : frame / fps)) || renderMetrics;
+            renderMetrics = renderer.render(previewCtx, previewBuffer.width, previewBuffer.height, frame / fps, readParams(), frame, fps, { ...readOSDOptions(loadedSourceType === "video" ? previewFrameSeconds : frame / fps), sourceView: getPreviewView() }) || renderMetrics;
           }
 
           if (rightWidth > 0) {
@@ -5262,7 +5322,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
             ctx.rect(splitX, drawY, rightWidth, drawH);
             ctx.clip();
             if (previewWidth === canvas.width && previewHeight === canvas.height) {
-              renderMetrics = renderer.render(ctx, canvas.width, canvas.height, frame / fps, readParams(), frame, fps, readOSDOptions(loadedSourceType === "video" ? previewFrameSeconds : frame / fps)) || renderMetrics;
+              renderMetrics = renderer.render(ctx, canvas.width, canvas.height, frame / fps, readParams(), frame, fps, { ...readOSDOptions(loadedSourceType === "video" ? previewFrameSeconds : frame / fps), sourceView: getPreviewView() }) || renderMetrics;
             } else {
               ctx.imageSmoothingEnabled = true;
               ctx.imageSmoothingQuality = "high";
@@ -5316,12 +5376,12 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
       const { width: previewWidth, height: previewHeight } = getPreviewRenderSize();
       let renderMetrics = { uploadMs: 0, presentMs: 0 };
       if (previewWidth === canvas.width && previewHeight === canvas.height) {
-        renderMetrics = renderer.render(ctx, canvas.width, canvas.height, frame / fps, readParams(), frame, fps, readOSDOptions(loadedSourceType === "video" ? previewFrameSeconds : frame / fps)) || renderMetrics;
+        renderMetrics = renderer.render(ctx, canvas.width, canvas.height, frame / fps, readParams(), frame, fps, { ...readOSDOptions(loadedSourceType === "video" ? previewFrameSeconds : frame / fps), sourceView: getPreviewView() }) || renderMetrics;
       } else {
         if (previewBuffer.width !== previewWidth) previewBuffer.width = previewWidth;
         if (previewBuffer.height !== previewHeight) previewBuffer.height = previewHeight;
         const previewCtx = previewBuffer.getContext("2d", { alpha: false, desynchronized: true });
-        renderMetrics = renderer.render(previewCtx, previewBuffer.width, previewBuffer.height, frame / fps, readParams(), frame, fps, readOSDOptions(loadedSourceType === "video" ? previewFrameSeconds : frame / fps)) || renderMetrics;
+        renderMetrics = renderer.render(previewCtx, previewBuffer.width, previewBuffer.height, frame / fps, readParams(), frame, fps, { ...readOSDOptions(loadedSourceType === "video" ? previewFrameSeconds : frame / fps), sourceView: getPreviewView() }) || renderMetrics;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -5357,6 +5417,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     setStatus(`Processing ${file.name} (${Math.round(file.size / 1024)} KB)...`, "info");
 
     try {
+      importedSourceScale = Math.max(0.1, Math.min(1, Number(sourceScaleControl?.getValue()) || 1));
       if (file.type.startsWith("video/") || /\.(mp4|webm|mov)$/i.test(file.name)) {
         const videoSource = await loadVideoFromFile(file);
         progressEl.value = 0.4;
@@ -5429,9 +5490,28 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
       return;
     }
 
+    const maxPixels = getSelectedRenderMaxPixels();
+    const sourceSize = getPipelineSourceSize();
+    let stillWidth = sourceSize.width;
+    let stillHeight = sourceSize.height;
+    if (maxPixels > 0 && (stillWidth * stillHeight) > maxPixels) {
+      const factor = Math.sqrt(maxPixels / (stillWidth * stillHeight));
+      stillWidth = Math.max(1, Math.round(stillWidth * factor));
+      stillHeight = Math.max(1, Math.round(stillHeight * factor));
+    }
+
+    const stillCanvas = document.createElement("canvas");
+    stillCanvas.width = stillWidth;
+    stillCanvas.height = stillHeight;
+    const stillCtx = stillCanvas.getContext("2d", { alpha: false, desynchronized: true });
+    renderer.render(stillCtx, stillWidth, stillHeight, 0, readParams(), 0, Math.max(1, Number(document.getElementById("fps").value) || 30), {
+      ...readOSDOptions(loadedSourceType === "video" ? previewFrameSeconds : 0),
+      sourceView: getPreviewView(),
+    });
+
     const filename = `crt-still-${Date.now()}.png`;
     const blob = await new Promise((resolve, reject) => {
-      canvas.toBlob((nextBlob) => {
+      stillCanvas.toBlob((nextBlob) => {
         if (!nextBlob) {
           reject(new Error("Canvas still export returned an empty blob."));
           return;
@@ -5462,7 +5542,12 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
       const selectedFormat = exportFormatControl?.getValue() || "mp4";
       const mustUseRealtimeAudio = includeOriginalAudio && loadedSourceType === "video";
       const maxExportEdge = getExportMaxEdge();
-      const baseExportSize = fitExportSize(canvas.width, canvas.height, { maxEdge: maxExportEdge });
+      const renderMaxPixels = getSelectedRenderMaxPixels();
+      const exportViewport = getPreviewView();
+      const exportSourceSize = getPipelineSourceSize();
+      const viewportBaseWidth = Math.max(1, Math.round(exportSourceSize.width * exportViewport.width));
+      const viewportBaseHeight = Math.max(1, Math.round(exportSourceSize.height * exportViewport.height));
+      const baseExportSize = fitExportSize(viewportBaseWidth, viewportBaseHeight, { maxEdge: maxExportEdge, maxPixels: renderMaxPixels });
       const mp4ExportSize = fitExportSize(baseExportSize.width, baseExportSize.height, { maxPixels: MAX_AVC_CODED_PIXELS, forceEven: true });
       const exportSize = selectedFormat === "webm" || mustUseRealtimeAudio ? baseExportSize : mp4ExportSize;
       const exportCanvas = document.createElement("canvas");
@@ -5494,7 +5579,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
             setStatus(`Realtime export frame ${current}/${total}`, "info");
           },
           signal: activeExportController.signal,
-          getRenderOptions: (t) => readOSDOptions(t),
+          getRenderOptions: (t) => ({ ...readOSDOptions(t), sourceView: exportViewport }),
         });
       } else {
         await exportMp4({
@@ -5515,7 +5600,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
           },
           signal: activeExportController.signal,
           bitrateScale: qualityMultiplier,
-          getRenderOptions: (t) => readOSDOptions(t),
+          getRenderOptions: (t) => ({ ...readOSDOptions(t), sourceView: exportViewport }),
         });
       }
       setStatus("Export finished. Download should begin automatically.", "success");
@@ -5686,6 +5771,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   previewScaleControl = setupSelectionBox("previewScale", {
     valueParser: Number,
     onChange: () => {
+      updatePreviewPanCursor();
       markPreviewDirty();
       progressEl.value = 0;
     },
@@ -5693,11 +5779,13 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
 
   sourceScaleControl = setupSelectionBox("sourceScale", {
     valueParser: Number,
-    onChange: () => {
-      refreshRendererSource();
-      if (loadedSourceType === "video" && isStillPreviewMode()) {
-        previewNeedsSeek = true;
+    onChange: (value) => {
+      if (hasLoadedSource) {
+        sourceScaleControl?.setValue(String(importedSourceScale), { silent: true });
+        setStatus("Import downsample is applied when media is loaded. Re-import to change it.", "warn");
+        return;
       }
+      importedSourceScale = Math.max(0.1, Math.min(1, Number(value) || 1));
       progressEl.value = 0;
     },
   });
@@ -5730,6 +5818,12 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     onChange: () => {
       progressEl.value = 0;
       updateExportEstimate();
+    },
+  });
+
+  stillRenderQualityControl = setupSelectionBox("stillRenderQuality", {
+    onChange: () => {
+      progressEl.value = 0;
     },
   });
 
@@ -5886,7 +5980,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
 
   compareSplitEnabledInput?.addEventListener("change", (event) => {
     compareSplitEnabled = !!event.target.checked;
-    canvas.style.cursor = compareSplitEnabled ? "ew-resize" : "";
+    updatePreviewPanCursor();
     markPreviewDirty();
     setStatus(compareSplitEnabled ? "Split compare enabled." : "Split compare disabled.", "info");
   });
@@ -5927,6 +6021,60 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     canvas.releasePointerCapture?.(event.pointerId);
   });
 
+  function updatePreviewPanCursor() {
+    const pannable = getPreviewScale() < 0.999;
+    if (compareSplitEnabled) {
+      canvas.style.cursor = "ew-resize";
+      return;
+    }
+    canvas.style.cursor = pannable ? (isDraggingPreviewPan ? "grabbing" : "grab") : "";
+  }
+
+  function updatePreviewPanFromPointer(event) {
+    const drawRect = getSourceDrawRect();
+    if (!drawRect) return;
+    const rect = canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const canvasX = ((event.clientX - rect.left) / rect.width) * canvas.width;
+    const canvasY = ((event.clientY - rect.top) / rect.height) * canvas.height;
+    const localX = (canvasX - drawRect.drawX) / Math.max(1, drawRect.drawW);
+    const localY = (canvasY - drawRect.drawY) / Math.max(1, drawRect.drawH);
+    const view = getPreviewView();
+    previewPanCenterX = view.x + Math.max(0, Math.min(1, localX)) * view.width;
+    previewPanCenterY = view.y + Math.max(0, Math.min(1, localY)) * view.height;
+    markPreviewDirty();
+  }
+
+  canvas.addEventListener("pointerdown", (event) => {
+    if (compareSplitEnabled || getPreviewScale() >= 0.999) return;
+    isDraggingPreviewPan = true;
+    previewPanPointerId = event.pointerId;
+    canvas.setPointerCapture?.(event.pointerId);
+    updatePreviewPanFromPointer(event);
+    updatePreviewPanCursor();
+  });
+
+  canvas.addEventListener("pointermove", (event) => {
+    if (!isDraggingPreviewPan || event.pointerId !== previewPanPointerId) return;
+    updatePreviewPanFromPointer(event);
+  });
+
+  canvas.addEventListener("pointerup", (event) => {
+    if (!isDraggingPreviewPan || event.pointerId !== previewPanPointerId) return;
+    isDraggingPreviewPan = false;
+    previewPanPointerId = null;
+    canvas.releasePointerCapture?.(event.pointerId);
+    updatePreviewPanCursor();
+  });
+
+  canvas.addEventListener("pointercancel", (event) => {
+    if (!isDraggingPreviewPan || event.pointerId !== previewPanPointerId) return;
+    isDraggingPreviewPan = false;
+    previewPanPointerId = null;
+    canvas.releasePointerCapture?.(event.pointerId);
+    updatePreviewPanCursor();
+  });
+
   window.addEventListener("keydown", (event) => {
     const isUndo = (event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === "z" && !event.shiftKey;
     const isRedo = (event.ctrlKey || event.metaKey) && !event.altKey && (
@@ -5952,6 +6100,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   });
 
   setupEffectPanelToggles();
+  updatePreviewPanCursor();
   setupCollapsiblePanels();
   setupTabs();
   setupQuickJumps();
