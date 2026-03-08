@@ -465,6 +465,12 @@ button {
   transition: border-color 130ms ease, background 130ms ease, box-shadow 130ms ease, transform 130ms ease;
 }
 
+select option,
+select optgroup {
+  color: #f2f2f2;
+  background-color: #262626;
+}
+
 input::file-selector-button {
   border: 1px solid #5d7494;
   border-radius: 6px;
