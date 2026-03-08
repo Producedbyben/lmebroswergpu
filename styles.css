@@ -1487,3 +1487,218 @@ input[type="range"]::-moz-range-thumb {
     min-height: 1.8rem;
   }
 }
+
+/* --- Additional theme variants --- */
+body[data-theme="dusk"] {
+  --bg-0: #141320;
+  --bg-1: #1d1c2e;
+  --bg-2: #2a2840;
+  --surface-0: #221f36;
+  --surface-1: #2a2742;
+  --surface-2: #363152;
+  --border-0: #544d79;
+  --border-1: #6f6897;
+  --text-0: #f2efff;
+  --text-1: #ddd7f9;
+  --text-2: #b1a9d4;
+  --accent: #aa9cff;
+  --accent-strong: #8e7ff0;
+  --accent-muted: rgba(170, 156, 255, 0.24);
+  background:
+    radial-gradient(circle at 10% -12%, rgba(158, 124, 255, 0.2) 0%, transparent 42%),
+    radial-gradient(circle at 90% 120%, rgba(124, 108, 210, 0.22) 0%, transparent 46%),
+    linear-gradient(168deg, #121020 0%, #1a1830 48%, #111022 100%);
+}
+
+body[data-theme="forest"] {
+  --bg-0: #101915;
+  --bg-1: #16231d;
+  --bg-2: #203228;
+  --surface-0: #18271f;
+  --surface-1: #203327;
+  --surface-2: #2b4333;
+  --border-0: #3f5f4a;
+  --border-1: #567a62;
+  --text-0: #edf7f0;
+  --text-1: #d4e7d8;
+  --text-2: #9ebba5;
+  --accent: #7ac694;
+  --accent-strong: #5cad78;
+  --accent-muted: rgba(122, 198, 148, 0.24);
+  background:
+    radial-gradient(circle at 10% -12%, rgba(112, 184, 140, 0.2) 0%, transparent 42%),
+    radial-gradient(circle at 88% 115%, rgba(78, 146, 111, 0.18) 0%, transparent 44%),
+    linear-gradient(168deg, #0d1512 0%, #14231c 50%, #0d1612 100%);
+}
+
+body[data-theme="amber"] {
+  --bg-0: #1b1410;
+  --bg-1: #271d16;
+  --bg-2: #372a1f;
+  --surface-0: #2a2018;
+  --surface-1: #33271e;
+  --surface-2: #443327;
+  --border-0: #6b5139;
+  --border-1: #866648;
+  --text-0: #fff5e9;
+  --text-1: #f2dfc8;
+  --text-2: #c8a98a;
+  --accent: #f3b46d;
+  --accent-strong: #db9750;
+  --accent-muted: rgba(243, 180, 109, 0.24);
+  background:
+    radial-gradient(circle at 12% -10%, rgba(242, 178, 99, 0.19) 0%, transparent 40%),
+    radial-gradient(circle at 90% 118%, rgba(179, 112, 58, 0.18) 0%, transparent 46%),
+    linear-gradient(170deg, #18110d 0%, #261b14 52%, #17110c 100%);
+}
+
+body[data-theme="dusk"] .panel,
+body[data-theme="dusk"] .workspace-toolbar,
+body[data-theme="dusk"] .toolbar-cluster,
+body[data-theme="dusk"] .export-dock {
+  background: linear-gradient(180deg, #2c2743 0%, #211d35 100%);
+}
+
+body[data-theme="forest"] .panel,
+body[data-theme="forest"] .workspace-toolbar,
+body[data-theme="forest"] .toolbar-cluster,
+body[data-theme="forest"] .export-dock {
+  background: linear-gradient(180deg, #213427 0%, #18291f 100%);
+}
+
+body[data-theme="amber"] .panel,
+body[data-theme="amber"] .workspace-toolbar,
+body[data-theme="amber"] .toolbar-cluster,
+body[data-theme="amber"] .export-dock {
+  background: linear-gradient(180deg, #392b20 0%, #2a2018 100%);
+}
+
+/* --- Theme consistency pass: ensure every theme recolors all controls --- */
+:root {
+  --btn-bg-start: #263143;
+  --btn-bg-end: #202939;
+  --btn-border: #4f6283;
+  --btn-text: #f4f7ff;
+  --btn-hover-border: #7e95bb;
+  --btn-secondary-start: #232f42;
+  --btn-secondary-end: #1b2433;
+  --btn-secondary-border: #546786;
+  --btn-secondary-text: #d6e2f6;
+  --selected-start: color-mix(in srgb, var(--accent) 92%, white 8%);
+  --selected-end: var(--accent-strong);
+  --selected-border: color-mix(in srgb, var(--accent) 68%, white 32%);
+  --selected-text: #fbfdff;
+  --top-cluster-start: color-mix(in srgb, var(--surface-1) 92%, black 8%);
+  --top-cluster-end: color-mix(in srgb, var(--surface-0) 94%, black 6%);
+}
+
+body[data-theme="midnight"] {
+  --btn-bg-start: #27344a;
+  --btn-bg-end: #1f2a3d;
+  --btn-border: #4f6385;
+  --btn-hover-border: #7f9ac7;
+  --btn-secondary-start: #233149;
+  --btn-secondary-end: #1b2538;
+  --btn-secondary-border: #5a7095;
+}
+
+body[data-theme="graphite"] {
+  --btn-bg-start: #3a3a3a;
+  --btn-bg-end: #303030;
+  --btn-border: #696969;
+  --btn-text: #f2f2f2;
+  --btn-hover-border: #8b8b8b;
+  --btn-secondary-start: #353535;
+  --btn-secondary-end: #2d2d2d;
+  --btn-secondary-border: #707070;
+  --btn-secondary-text: #e0e0e0;
+}
+
+body[data-theme="classic"] {
+  --btn-bg-start: #2f405c;
+  --btn-bg-end: #24354d;
+  --btn-border: #607ca5;
+  --btn-hover-border: #84a7d8;
+  --btn-secondary-start: #2a3a54;
+  --btn-secondary-end: #223149;
+  --btn-secondary-border: #6984af;
+}
+
+body[data-theme="dusk"] {
+  --btn-bg-start: #3b3559;
+  --btn-bg-end: #2e2946;
+  --btn-border: #6f6697;
+  --btn-hover-border: #9287c8;
+  --btn-secondary-start: #342f50;
+  --btn-secondary-end: #282341;
+  --btn-secondary-border: #7d73aa;
+  --btn-secondary-text: #ece6ff;
+}
+
+body[data-theme="forest"] {
+  --btn-bg-start: #2b4334;
+  --btn-bg-end: #213327;
+  --btn-border: #5d7f66;
+  --btn-hover-border: #7eab8c;
+  --btn-secondary-start: #263d2f;
+  --btn-secondary-end: #1d2f24;
+  --btn-secondary-border: #668d72;
+  --btn-secondary-text: #e5f5e9;
+}
+
+body[data-theme="amber"] {
+  --btn-bg-start: #4a382a;
+  --btn-bg-end: #38291f;
+  --btn-border: #8d6b4d;
+  --btn-hover-border: #b2865f;
+  --btn-secondary-start: #422f24;
+  --btn-secondary-end: #32241c;
+  --btn-secondary-border: #9a7350;
+  --btn-secondary-text: #fff0df;
+}
+
+.panel {
+  border-color: var(--border-0);
+  background: linear-gradient(180deg, var(--surface-1) 0%, var(--surface-0) 100%);
+}
+
+.workspace-toolbar,
+.toolbar-cluster,
+.export-dock {
+  border-color: var(--border-1);
+  background: linear-gradient(180deg, var(--top-cluster-start) 0%, var(--top-cluster-end) 100%);
+}
+
+input,
+select,
+button {
+  background: linear-gradient(180deg, var(--btn-bg-start) 0%, var(--btn-bg-end) 100%);
+  border-color: var(--btn-border);
+  color: var(--btn-text);
+}
+
+input:hover,
+button:hover,
+select:hover {
+  border-color: var(--btn-hover-border);
+}
+
+.secondary-btn {
+  background: linear-gradient(180deg, var(--btn-secondary-start) 0%, var(--btn-secondary-end) 100%);
+  border-color: var(--btn-secondary-border);
+  color: var(--btn-secondary-text);
+}
+
+.selection-box button[data-selected="true"],
+.tab-btn[data-selected="true"] {
+  background: linear-gradient(180deg, var(--selected-start) 0%, var(--selected-end) 100%);
+  border-color: var(--selected-border);
+  color: var(--selected-text);
+}
+
+.export-actions #exportBtn {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 86%, white 14%) 0%, var(--accent-strong) 100%);
+  border-color: color-mix(in srgb, var(--accent) 62%, white 38%);
+  color: #ffffff;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--accent-strong) 45%, transparent);
+}
