@@ -3537,6 +3537,12 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   const compareHoldBtn = document.getElementById("compareHoldBtn");
   const compareLockBtn = document.getElementById("compareLockBtn");
   const compareSplitEnabledInput = document.getElementById("compareSplitEnabled");
+  const previewFitBtn = document.getElementById("previewFitBtn");
+  const previewCenterBtn = document.getElementById("previewCenterBtn");
+  const previewSplitToggleBtn = document.getElementById("previewSplitToggleBtn");
+  const previewZoomOutBtn = document.getElementById("previewZoomOutBtn");
+  const previewZoomInBtn = document.getElementById("previewZoomInBtn");
+  const previewModeToggleBtn = document.getElementById("previewModeToggleBtn");
   const presetDirtyTag = document.getElementById("presetDirtyTag");
   const presetIntensityInput = document.getElementById("presetIntensity");
   const presetCategoryFilter = document.getElementById("presetCategoryFilter");
@@ -3544,6 +3550,8 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   const presetFilterMeta = document.getElementById("presetFilterMeta");
   const exportEstimateEl = document.getElementById("exportEstimate");
   const densityModeRoot = document.getElementById("densityMode");
+  const themeSelectRoot = document.getElementById("themeSelect");
+  const themeModeRoot = document.getElementById("themeMode");
   const undoLookBtn = document.getElementById("undoLookBtn");
   const redoLookBtn = document.getElementById("redoLookBtn");
   const debugRenderDiagnostics = /[?&]debugRender=1/.test(window.location.search);
@@ -4262,6 +4270,48 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     setDensity(normalized);
   }
 
+  function setupThemeMode() {
+    const storageKey = "crt-ui-theme";
+    const validThemes = new Set(["midnight", "graphite", "classic", "dusk", "forest", "amber", "daylight", "paper"]);
+
+    const setTheme = (value) => {
+      const theme = validThemes.has(value) ? value : "midnight";
+      document.body.dataset.theme = theme;
+      if (themeSelectRoot) themeSelectRoot.value = theme;
+      try {
+        localStorage.setItem(storageKey, theme);
+      } catch {
+        // No-op if storage is not available.
+      }
+    };
+
+    if (themeSelectRoot) {
+      themeSelectRoot.addEventListener("change", () => {
+        setTheme(themeSelectRoot.value);
+      });
+    }
+
+    let legacyThemeControl = null;
+    if (themeModeRoot) {
+      legacyThemeControl = setupSelectionBox("themeMode", {
+        onChange: (value) => setTheme(value),
+      });
+    }
+
+    let stored = "midnight";
+    try {
+      stored = localStorage.getItem(storageKey) || "midnight";
+    } catch {
+      stored = "midnight";
+    }
+
+    const normalized = validThemes.has(stored) ? stored : "midnight";
+    if (legacyThemeControl) {
+      legacyThemeControl.setValue(normalized, { silent: true });
+    }
+    setTheme(normalized);
+  }
+
   function setStatus(message, mode = "info") {
     statusEl.textContent = message;
     statusEl.dataset.mode = mode;
@@ -4314,7 +4364,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   }
 
   function getPreviewScale() {
-    return Math.max(0.1, Number(previewScaleControl?.getValue()) || 1);
+    return Math.max(1, Number(previewScaleControl?.getValue()) || 1);
   }
 
   function getSourceScale() {
@@ -4375,7 +4425,8 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   }
 
   function getPreviewView() {
-    const viewWidth = Math.max(0.1, Math.min(1, getPreviewScale()));
+    const zoom = getPreviewScale();
+    const viewWidth = Math.max(0.1, Math.min(1, 1 / zoom));
     const viewHeight = viewWidth;
     const halfW = viewWidth * 0.5;
     const halfH = viewHeight * 0.5;
@@ -4422,6 +4473,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
 
   function updatePreviewControlsState() {
     const isVideo = loadedSourceType === "video" && loadedVideo?.video;
+    const hasSource = !!loadedSourceType;
     const stillMode = isStillPreviewMode();
     const previewTime = document.getElementById("previewTime");
     const previewFps = document.getElementById("previewFps");
@@ -4429,6 +4481,17 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     previewTime.disabled = !isVideo;
     previewFps.disabled = !isVideo || stillMode;
     previewModeControl?.setDisabled(!isVideo);
+
+    if (previewFitBtn) previewFitBtn.disabled = !hasSource;
+    if (previewCenterBtn) previewCenterBtn.disabled = !hasSource;
+    if (previewZoomOutBtn) previewZoomOutBtn.disabled = !hasSource;
+    if (previewZoomInBtn) previewZoomInBtn.disabled = !hasSource;
+    if (previewSplitToggleBtn) previewSplitToggleBtn.disabled = !hasSource;
+
+    if (previewModeToggleBtn) {
+      previewModeToggleBtn.disabled = !isVideo;
+      previewModeToggleBtn.textContent = isVideo ? "Toggle playback" : "Playback only";
+    }
   }
 
   function syncPreviewTimeControl() {
@@ -5985,6 +6048,32 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     setStatus(compareSplitEnabled ? "Split compare enabled." : "Split compare disabled.", "info");
   });
 
+  previewFitBtn?.addEventListener("click", () => {
+    previewScaleControl?.setValue("1");
+    setPreviewCenter(0.5, 0.5);
+    setStatus("Preview reset to fit view.", "info");
+  });
+
+  previewCenterBtn?.addEventListener("click", () => {
+    setPreviewCenter(0.5, 0.5);
+    setStatus("Preview recentered.", "info");
+  });
+
+  previewSplitToggleBtn?.addEventListener("click", () => {
+    if (!compareSplitEnabledInput) return;
+    compareSplitEnabledInput.checked = !compareSplitEnabledInput.checked;
+    compareSplitEnabledInput.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+
+  previewZoomOutBtn?.addEventListener("click", () => stepPreviewZoom(-1));
+  previewZoomInBtn?.addEventListener("click", () => stepPreviewZoom(1));
+
+  previewModeToggleBtn?.addEventListener("click", () => {
+    const next = isStillPreviewMode() ? "playback" : "still";
+    previewModeControl?.setValue(next);
+    setStatus(next === "playback" ? "Preview mode: playback." : "Preview mode: still.", "info");
+  });
+
   function updateCompareSplitFromEvent(event) {
     if (!compareSplitEnabled) return;
     const sourceRect = getSourceDrawRect();
@@ -6022,7 +6111,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   });
 
   function updatePreviewPanCursor() {
-    const pannable = getPreviewScale() < 0.999;
+    const pannable = getPreviewScale() > 1.001;
     if (compareSplitEnabled) {
       canvas.style.cursor = "ew-resize";
       return;
@@ -6045,8 +6134,34 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     markPreviewDirty();
   }
 
+  function setPreviewCenter(x = 0.5, y = 0.5) {
+    previewPanCenterX = Math.max(0, Math.min(1, Number(x) || 0.5));
+    previewPanCenterY = Math.max(0, Math.min(1, Number(y) || 0.5));
+    updatePreviewPanCursor();
+    markPreviewDirty();
+    progressEl.value = 0;
+  }
+
+  function stepPreviewZoom(direction = 1) {
+    const presets = [1, 1.33, 2, 3];
+    const current = Number(previewScaleControl?.getValue?.() || 1);
+    let index = presets.findIndex((value) => Math.abs(value - current) < 0.01);
+    if (index < 0) {
+      index = presets.reduce((best, value, idx) => {
+        const bestDiff = Math.abs(presets[best] - current);
+        const diff = Math.abs(value - current);
+        return diff < bestDiff ? idx : best;
+      }, 0);
+    }
+
+    const nextIndex = Math.max(0, Math.min(presets.length - 1, index + (direction > 0 ? 1 : -1)));
+    const nextValue = presets[nextIndex];
+    previewScaleControl?.setValue(String(nextValue));
+    setStatus(`Preview zoom: ${nextValue}×`, "info");
+  }
+
   canvas.addEventListener("pointerdown", (event) => {
-    if (compareSplitEnabled || getPreviewScale() >= 0.999) return;
+    if (compareSplitEnabled || getPreviewScale() <= 1.001) return;
     isDraggingPreviewPan = true;
     previewPanPointerId = event.pointerId;
     canvas.setPointerCapture?.(event.pointerId);
@@ -6105,6 +6220,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   setupTabs();
   setupQuickJumps();
   setupDensityMode();
+  setupThemeMode();
 
   setExportAvailability();
   loadParameterPolicyState();
