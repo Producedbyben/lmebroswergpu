@@ -3499,6 +3499,8 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   const renderer = createRendererAdapter();
   const canvas = document.getElementById("previewCanvas");
   const ctx = canvas.getContext("2d", { alpha: false, desynchronized: true });
+  const navigatorCanvas = document.getElementById("navigatorCanvas");
+  const navigatorCtx = navigatorCanvas?.getContext("2d", { alpha: false, desynchronized: true });
   const statusEl = document.getElementById("status");
   const progressEl = document.getElementById("progress");
   const previewBuffer = document.createElement("canvas");
@@ -3543,6 +3545,8 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   const previewZoomOutBtn = document.getElementById("previewZoomOutBtn");
   const previewZoomInBtn = document.getElementById("previewZoomInBtn");
   const previewModeToggleBtn = document.getElementById("previewModeToggleBtn");
+  const navigatorZoomInput = document.getElementById("navigatorZoom");
+  const navigatorZoomLabel = document.getElementById("navigatorZoomLabel");
   const presetDirtyTag = document.getElementById("presetDirtyTag");
   const presetIntensityInput = document.getElementById("presetIntensity");
   const presetCategoryFilter = document.getElementById("presetCategoryFilter");
@@ -3666,6 +3670,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   let previewPanCenterX = 0.5;
   let previewPanCenterY = 0.5;
   let isDraggingPreviewPan = false;
+  let isDraggingNavigator = false;
   let previewPanPointerId = null;
   let importedSourceScale = 1;
   let activePresetName = null;
@@ -4459,6 +4464,77 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     return { srcW, srcH, cropX, cropY, cropW, cropH, drawX, drawY, drawW, drawH };
   }
 
+  function getNavigatorRect(source = getActiveSourceElement()) {
+    if (!source || !navigatorCanvas || !navigatorCtx) return null;
+    const srcW = source.videoWidth || source.naturalWidth || canvas.width;
+    const srcH = source.videoHeight || source.naturalHeight || canvas.height;
+    const navW = navigatorCanvas.width;
+    const navH = navigatorCanvas.height;
+    const scale = Math.min(navW / srcW, navH / srcH);
+    const drawW = Math.max(1, Math.round(srcW * scale));
+    const drawH = Math.max(1, Math.round(srcH * scale));
+    const drawX = Math.round((navW - drawW) / 2);
+    const drawY = Math.round((navH - drawH) / 2);
+    return { srcW, srcH, drawX, drawY, drawW, drawH };
+  }
+
+  function drawPreviewNavigator() {
+    if (!navigatorCanvas || !navigatorCtx) return;
+    navigatorCtx.fillStyle = "#04060a";
+    navigatorCtx.fillRect(0, 0, navigatorCanvas.width, navigatorCanvas.height);
+    const source = getActiveSourceElement();
+    const rect = getNavigatorRect(source);
+    if (!source || !rect) return;
+    const { drawX, drawY, drawW, drawH } = rect;
+    navigatorCtx.imageSmoothingEnabled = true;
+    navigatorCtx.imageSmoothingQuality = "high";
+    navigatorCtx.drawImage(source, 0, 0, rect.srcW, rect.srcH, drawX, drawY, drawW, drawH);
+
+    const view = getPreviewView();
+    const viewportX = drawX + Math.round(view.x * drawW);
+    const viewportY = drawY + Math.round(view.y * drawH);
+    const viewportW = Math.max(2, Math.round(view.width * drawW));
+    const viewportH = Math.max(2, Math.round(view.height * drawH));
+
+    navigatorCtx.fillStyle = "rgba(0, 0, 0, 0.35)";
+    navigatorCtx.fillRect(drawX, drawY, drawW, drawH);
+    navigatorCtx.clearRect(viewportX, viewportY, viewportW, viewportH);
+
+    navigatorCtx.strokeStyle = "rgba(227, 237, 255, 0.96)";
+    navigatorCtx.lineWidth = 2;
+    navigatorCtx.strokeRect(viewportX + 0.5, viewportY + 0.5, viewportW - 1, viewportH - 1);
+
+    if (navigatorZoomLabel) {
+      navigatorZoomLabel.textContent = `${Math.round(getPreviewScale() * 100)}%`;
+    }
+  }
+
+  function setPreviewZoom(nextZoom, { silent = false } = {}) {
+    const zoom = Math.max(1, Math.min(6, Number(nextZoom) || 1));
+    previewScaleControl?.setValue(String(zoom), { silent });
+    if (navigatorZoomInput) {
+      navigatorZoomInput.value = String(zoom);
+      navigatorZoomInput.__syncRangeNumber?.();
+    }
+    if (navigatorZoomLabel) navigatorZoomLabel.textContent = `${Math.round(zoom * 100)}%`;
+    updatePreviewPanCursor();
+    markPreviewDirty();
+  }
+
+  function updatePanFromNavigatorEvent(event) {
+    if (!navigatorCanvas) return;
+    const source = getActiveSourceElement();
+    const navRect = getNavigatorRect(source);
+    if (!source || !navRect) return;
+    const bounds = navigatorCanvas.getBoundingClientRect();
+    if (!bounds.width || !bounds.height) return;
+    const canvasX = ((event.clientX - bounds.left) / bounds.width) * navigatorCanvas.width;
+    const canvasY = ((event.clientY - bounds.top) / bounds.height) * navigatorCanvas.height;
+    const nx = (canvasX - navRect.drawX) / Math.max(1, navRect.drawW);
+    const ny = (canvasY - navRect.drawY) / Math.max(1, navRect.drawH);
+    setPreviewCenter(nx, ny);
+  }
+
   function refreshRendererSource() {
     if (loadedSourceType === "video" && loadedVideo?.video) {
       renderer.setImage(loadedVideo.video, getSourceScale());
@@ -4487,6 +4563,8 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     if (previewZoomOutBtn) previewZoomOutBtn.disabled = !hasSource;
     if (previewZoomInBtn) previewZoomInBtn.disabled = !hasSource;
     if (previewSplitToggleBtn) previewSplitToggleBtn.disabled = !hasSource;
+    if (navigatorZoomInput) navigatorZoomInput.disabled = !hasSource;
+    if (navigatorCanvas) navigatorCanvas.style.opacity = hasSource ? "1" : "0.6";
 
     if (previewModeToggleBtn) {
       previewModeToggleBtn.disabled = !isVideo;
@@ -5423,6 +5501,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
           ctx.fillText("↔", splitX, handleY + 0.5);
           ctx.restore();
 
+          drawPreviewNavigator();
           previewDirty = false;
           if (debugRenderDiagnostics) {
             diagnostics.commit({
@@ -5464,6 +5543,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
           diagnosticsEl.textContent = `Renderer:${sample.renderer} frame:${sample.frameMs.toFixed(2)}ms upload:${sample.uploadMs.toFixed(2)}ms present:${sample.presentMs.toFixed(2)}ms dropped:${sample.droppedFrames} blocked:${sample.mainThreadBlockedMs.toFixed(1)}ms`;
         }
       }
+      drawPreviewNavigator();
       previewDirty = false;
     }
     requestAnimationFrame(animate);
@@ -5834,11 +5914,19 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   previewScaleControl = setupSelectionBox("previewScale", {
     valueParser: Number,
     onChange: () => {
+      if (navigatorZoomInput) {
+        navigatorZoomInput.value = String(getPreviewScale());
+        navigatorZoomInput.__syncRangeNumber?.();
+      }
+      if (navigatorZoomLabel) navigatorZoomLabel.textContent = `${Math.round(getPreviewScale() * 100)}%`;
       updatePreviewPanCursor();
       markPreviewDirty();
       progressEl.value = 0;
     },
   });
+
+  if (navigatorZoomInput) navigatorZoomInput.value = String(getPreviewScale());
+  if (navigatorZoomLabel) navigatorZoomLabel.textContent = `${Math.round(getPreviewScale() * 100)}%`;
 
   sourceScaleControl = setupSelectionBox("sourceScale", {
     valueParser: Number,
@@ -6049,7 +6137,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   });
 
   previewFitBtn?.addEventListener("click", () => {
-    previewScaleControl?.setValue("1");
+    setPreviewZoom(1, { silent: true });
     setPreviewCenter(0.5, 0.5);
     setStatus("Preview reset to fit view.", "info");
   });
@@ -6143,7 +6231,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   }
 
   function stepPreviewZoom(direction = 1) {
-    const presets = [1, 1.33, 2, 3];
+    const presets = [1, 1.33, 2, 3, 4, 6];
     const current = Number(previewScaleControl?.getValue?.() || 1);
     let index = presets.findIndex((value) => Math.abs(value - current) < 0.01);
     if (index < 0) {
@@ -6156,7 +6244,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
 
     const nextIndex = Math.max(0, Math.min(presets.length - 1, index + (direction > 0 ? 1 : -1)));
     const nextValue = presets[nextIndex];
-    previewScaleControl?.setValue(String(nextValue));
+    setPreviewZoom(nextValue, { silent: true });
     setStatus(`Preview zoom: ${nextValue}×`, "info");
   }
 
@@ -6188,6 +6276,41 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     previewPanPointerId = null;
     canvas.releasePointerCapture?.(event.pointerId);
     updatePreviewPanCursor();
+  });
+
+  canvas.addEventListener("wheel", (event) => {
+    if (!loadedSourceType) return;
+    event.preventDefault();
+    const direction = event.deltaY < 0 ? 1 : -1;
+    stepPreviewZoom(direction);
+  }, { passive: false });
+
+  navigatorZoomInput?.addEventListener("input", (event) => {
+    setPreviewZoom(event.target.value, { silent: true });
+  });
+
+  navigatorCanvas?.addEventListener("pointerdown", (event) => {
+    if (!loadedSourceType) return;
+    isDraggingNavigator = true;
+    navigatorCanvas.setPointerCapture?.(event.pointerId);
+    updatePanFromNavigatorEvent(event);
+  });
+
+  navigatorCanvas?.addEventListener("pointermove", (event) => {
+    if (!isDraggingNavigator) return;
+    updatePanFromNavigatorEvent(event);
+  });
+
+  navigatorCanvas?.addEventListener("pointerup", (event) => {
+    if (!isDraggingNavigator) return;
+    isDraggingNavigator = false;
+    navigatorCanvas.releasePointerCapture?.(event.pointerId);
+  });
+
+  navigatorCanvas?.addEventListener("pointercancel", (event) => {
+    if (!isDraggingNavigator) return;
+    isDraggingNavigator = false;
+    navigatorCanvas.releasePointerCapture?.(event.pointerId);
   });
 
   window.addEventListener("keydown", (event) => {
