@@ -56,6 +56,43 @@
           </div>
         </section>
 
+        <section class="panel panel-collapsible" id="previewToolsPanel" aria-label="Preview tools">
+          <header class="panel-header">Preview tools</header>
+          <div class="panel-body preview-tools-panel-body">
+            <label>Preview mode
+              <div id="previewMode" class="selection-box" role="radiogroup" aria-label="Preview mode">
+                <button type="button" data-value="still" data-selected="true">Still</button>
+                <button type="button" data-value="playback">Playback</button>
+              </div>
+            </label>
+            <label>Preview scale
+              <div id="previewScale" class="selection-box selection-inline" role="radiogroup" aria-label="Preview scale">
+                <button type="button" data-value="1" data-selected="true">1× Fit</button>
+                <button type="button" data-value="1.33">1.33×</button>
+                <button type="button" data-value="2">2×</button>
+                <button type="button" data-value="3">3×</button>
+                <button type="button" data-value="4">4×</button>
+                <button type="button" data-value="6">6×</button>
+              </div>
+            </label>
+            <div class="preview-quick-actions" aria-label="Quick preview actions">
+              <button id="previewFitBtn" type="button" class="secondary-btn preview-icon-btn" aria-label="Fit preview to view" title="Reset preview zoom to fit">⤢ Fit</button>
+              <button id="previewCenterBtn" type="button" class="secondary-btn preview-icon-btn" aria-label="Center preview view" title="Center the current zoomed view">◎ Center</button>
+              <button id="previewSplitToggleBtn" type="button" class="secondary-btn preview-icon-btn" aria-label="Toggle split compare" title="Toggle compare split mode">◫ Split</button>
+            </div>
+            <section class="preview-navigator" aria-label="Navigator panel">
+              <header class="preview-navigator-header">
+                <strong>Navigator</strong>
+                <span id="navigatorZoomLabel">100%</span>
+              </header>
+              <canvas id="navigatorCanvas" width="280" height="176" aria-label="Navigator viewport"></canvas>
+              <label>Navigator zoom
+                <span class="range-control range-control-compact"><input id="navigatorZoom" type="range" min="1" max="6" step="0.01" value="1" /></span>
+              </label>
+            </section>
+          </div>
+        </section>
+
         <section class="panel panel-collapsible" id="presetsPanel" aria-label="Preset controls">
           <header class="panel-header">Presets</header>
           <div class="panel-body">
@@ -154,31 +191,6 @@
           </nav>
 
           <div class="workspace-toolbar-grid">
-            <section class="toolbar-cluster toolbar-cluster-preview" aria-label="Preview controls cluster">
-              <label>Preview mode
-                <div id="previewMode" class="selection-box" role="radiogroup" aria-label="Preview mode">
-                  <button type="button" data-value="still" data-selected="true">Still</button>
-                  <button type="button" data-value="playback">Playback</button>
-                </div>
-              </label>
-              <label>Preview scale
-                <div id="previewScale" class="selection-box selection-inline" role="radiogroup" aria-label="Preview scale">
-                  <button type="button" data-value="1" data-selected="true">1× Fit</button>
-                  <button type="button" data-value="1.33">1.33×</button>
-                  <button type="button" data-value="2">2×</button>
-                  <button type="button" data-value="3">3×</button>
-                </div>
-              </label>
-              <div class="preview-quick-actions" aria-label="Quick preview actions">
-                <button id="previewFitBtn" type="button" class="secondary-btn" title="Reset preview zoom to fit">Fit view</button>
-                <button id="previewCenterBtn" type="button" class="secondary-btn" title="Center the current zoomed view">Center view</button>
-                <button id="previewSplitToggleBtn" type="button" class="secondary-btn" title="Toggle compare split mode">Split compare</button>
-                <button id="previewZoomOutBtn" type="button" class="secondary-btn" title="Step to the previous preview zoom preset">Zoom out</button>
-                <button id="previewZoomInBtn" type="button" class="secondary-btn" title="Step to the next preview zoom preset">Zoom in</button>
-                <button id="previewModeToggleBtn" type="button" class="secondary-btn" title="Toggle between still and playback preview">Toggle playback</button>
-              </div>
-            </section>
-
             <section class="toolbar-cluster toolbar-cluster-session" aria-label="Session and history controls cluster">
               <div class="history-actions" aria-label="Look history controls">
                 <button id="undoLookBtn" type="button" class="secondary-btn" title="Undo look change (Ctrl/Cmd+Z)">Undo</button>
@@ -201,7 +213,7 @@
         </header>
 
         <section class="preview panel" id="previewPanel" tabindex="-1" aria-label="Preview canvas and playback controls">
-          <canvas id="previewCanvas" width="960" height="540"></canvas>
+          <canvas id="previewCanvas" class="preview-main-canvas" width="960" height="540"></canvas>
           <div class="timeline-row">
             <label>Preview frame (s)
               <span class="range-control range-control-compact"><input id="previewTime" type="range" min="0" max="0" step="0.01" value="0" disabled /></span>

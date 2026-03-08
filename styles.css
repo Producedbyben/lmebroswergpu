@@ -360,7 +360,7 @@ kbd {
 
 .workspace-toolbar-grid {
   display: grid;
-  grid-template-columns: minmax(320px, 1.5fr) minmax(260px, 1fr) minmax(230px, 0.9fr);
+  grid-template-columns: minmax(320px, 1fr) minmax(260px, 1fr);
   gap: 0.55rem;
   align-items: stretch;
 }
@@ -429,6 +429,79 @@ canvas {
   background: #020203;
   object-fit: contain;
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.4);
+}
+
+.preview-main-canvas {
+  grid-column: 1 / -1;
+}
+
+
+.preview-tools-panel-body {
+  gap: 0.5rem;
+}
+
+.preview-tools-panel-body .preview-quick-actions {
+  margin-top: 0.1rem;
+  width: auto;
+  grid-template-columns: repeat(3, max-content);
+  justify-content: start;
+  gap: 0.24rem;
+}
+
+.preview-tools-panel-body .preview-quick-actions button {
+  width: auto;
+  min-width: 0;
+  min-height: 1.6rem;
+  padding: 0.2rem 0.45rem;
+}
+
+.preview-icon-btn {
+  font-size: 0.72rem;
+  line-height: 1.2;
+  font-weight: 560;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.28rem;
+  white-space: nowrap;
+}
+
+.preview-navigator {
+  width: 100%;
+  margin-top: 0;
+  display: grid;
+  gap: 0.38rem;
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(102, 122, 144, 0.68);
+  background: linear-gradient(180deg, rgba(17, 22, 30, 0.92) 0%, rgba(14, 18, 25, 0.92) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.preview-navigator-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  color: #d4deef;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+#navigatorZoomLabel {
+  color: #9eb6d7;
+  font-size: 0.67rem;
+}
+
+#navigatorCanvas {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  cursor: crosshair;
+  border-radius: calc(var(--radius-sm) - 2px);
+  border: 1px solid rgba(138, 160, 186, 0.48);
+  background: #05070b;
+  box-shadow: inset 0 0 0 1px rgba(18, 24, 34, 0.75);
 }
 
 .timeline-row { display: grid; grid-template-columns: 1.4fr 120px 1fr auto; gap: 0.52rem; align-items: end; }
@@ -806,6 +879,7 @@ body[data-density="compact"] .selection-box button { font-size: 0.67rem; }
   .workspace-top-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .workspace-toolbar-grid { grid-template-columns: 1fr; }
   .toolbar-cluster-preview { grid-template-columns: 1fr; }
+
   .toolbar-cluster-compare { grid-column: auto; }
   canvas { max-height: 55vh; }
 }
