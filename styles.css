@@ -735,6 +735,14 @@ body[data-density="compact"] .selection-box button { font-size: 0.67rem; }
   }
 }
 
+@media (max-width: 1320px) {
+  .left-rail,
+  .right-inspector {
+    backdrop-filter: none;
+    background: linear-gradient(180deg, rgba(14, 20, 29, 0.95) 0%, rgba(10, 15, 23, 0.95) 100%);
+  }
+}
+
 @media (max-width: 1180px) {
   body { overflow: auto; }
   .app { grid-template-columns: 1fr; height: auto; overflow: visible; }
