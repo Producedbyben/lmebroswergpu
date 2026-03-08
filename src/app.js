@@ -4333,6 +4333,23 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     return { width, height };
   }
 
+
+  function getActiveSourceElement() {
+    return loadedSourceType === "video" ? loadedVideo?.video : loadedImage;
+  }
+
+  function getSourceDrawRect(source = getActiveSourceElement()) {
+    if (!source) return null;
+    const srcW = source.videoWidth || source.naturalWidth || canvas.width;
+    const srcH = source.videoHeight || source.naturalHeight || canvas.height;
+    const scale = Math.min(canvas.width / srcW, canvas.height / srcH);
+    const drawW = Math.max(1, Math.round(srcW * scale));
+    const drawH = Math.max(1, Math.round(srcH * scale));
+    const drawX = Math.round((canvas.width - drawW) / 2);
+    const drawY = Math.round((canvas.height - drawH) / 2);
+    return { srcW, srcH, drawX, drawY, drawW, drawH };
+  }
+
   function refreshRendererSource() {
     if (loadedSourceType === "video" && loadedVideo?.video) {
       renderer.setImage(loadedVideo.video, getSourceScale());
@@ -5198,15 +5215,14 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     if (shouldRender) {
       const frameStart = performance.now();
       if ((showOriginalPreview || compareSplitEnabled) && renderer.hasImage) {
-        const source = loadedSourceType === "video" ? loadedVideo?.video : loadedImage;
+        const source = getActiveSourceElement();
         if (source) {
-          const srcW = source.videoWidth || source.naturalWidth || canvas.width;
-          const srcH = source.videoHeight || source.naturalHeight || canvas.height;
-          const scale = Math.min(canvas.width / srcW, canvas.height / srcH);
-          const drawW = Math.max(1, Math.round(srcW * scale));
-          const drawH = Math.max(1, Math.round(srcH * scale));
-          const drawX = Math.round((canvas.width - drawW) / 2);
-          const drawY = Math.round((canvas.height - drawH) / 2);
+          const drawRect = getSourceDrawRect(source);
+          if (!drawRect) {
+            requestAnimationFrame(animate);
+            return;
+          }
+          const { srcW, srcH, drawX, drawY, drawW, drawH } = drawRect;
 
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           ctx.fillStyle = "black";
@@ -5226,8 +5242,9 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
           const leftWidth = Math.max(0, splitX - drawX);
           const rightWidth = Math.max(0, drawW - leftWidth);
 
-          if (leftWidth > 0) {
-            ctx.drawImage(source, 0, 0, srcW, srcH, drawX, drawY, leftWidth, drawH);
+          const srcSplitX = Math.max(0, Math.min(srcW, Math.round(srcW * compareSplitRatio)));
+          if (leftWidth > 0 && srcSplitX > 0) {
+            ctx.drawImage(source, 0, 0, srcSplitX, srcH, drawX, drawY, leftWidth, drawH);
           }
 
           const { width: previewWidth, height: previewHeight } = getPreviewRenderSize();
@@ -5263,6 +5280,24 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
           ctx.moveTo(splitX + 0.5, drawY);
           ctx.lineTo(splitX + 0.5, drawY + drawH);
           ctx.stroke();
+
+          const handleY = drawY + Math.round(drawH / 2);
+          const handleOuterRadius = 16;
+          const handleInnerRadius = 11;
+          ctx.fillStyle = "rgba(20, 32, 48, 0.9)";
+          ctx.beginPath();
+          ctx.arc(splitX, handleY, handleOuterRadius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = "rgba(226, 237, 255, 0.95)";
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(splitX, handleY, handleInnerRadius, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.fillStyle = "rgba(226, 237, 255, 0.95)";
+          ctx.font = "bold 14px system-ui, sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText("↔", splitX, handleY + 0.5);
           ctx.restore();
 
           previewDirty = false;
@@ -5851,15 +5886,19 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
 
   compareSplitEnabledInput?.addEventListener("change", (event) => {
     compareSplitEnabled = !!event.target.checked;
+    canvas.style.cursor = compareSplitEnabled ? "ew-resize" : "";
     markPreviewDirty();
     setStatus(compareSplitEnabled ? "Split compare enabled." : "Split compare disabled.", "info");
   });
 
   function updateCompareSplitFromEvent(event) {
     if (!compareSplitEnabled) return;
+    const sourceRect = getSourceDrawRect();
+    if (!sourceRect) return;
     const rect = canvas.getBoundingClientRect();
     if (!rect.width) return;
-    const ratio = (event.clientX - rect.left) / rect.width;
+    const canvasX = ((event.clientX - rect.left) / rect.width) * canvas.width;
+    const ratio = (canvasX - sourceRect.drawX) / sourceRect.drawW;
     compareSplitRatio = Math.min(1, Math.max(0, ratio));
     markPreviewDirty();
   }
