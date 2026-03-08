@@ -3544,6 +3544,8 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   const presetFilterMeta = document.getElementById("presetFilterMeta");
   const exportEstimateEl = document.getElementById("exportEstimate");
   const densityModeRoot = document.getElementById("densityMode");
+  const themeSelectRoot = document.getElementById("themeSelect");
+  const themeModeRoot = document.getElementById("themeMode");
   const undoLookBtn = document.getElementById("undoLookBtn");
   const redoLookBtn = document.getElementById("redoLookBtn");
   const debugRenderDiagnostics = /[?&]debugRender=1/.test(window.location.search);
@@ -4260,6 +4262,48 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     const normalized = stored === "compact" ? "compact" : "comfortable";
     densityControl.setValue(normalized, { silent: true });
     setDensity(normalized);
+  }
+
+  function setupThemeMode() {
+    const storageKey = "crt-ui-theme";
+    const validThemes = new Set(["midnight", "graphite", "classic", "dusk", "forest", "amber", "daylight", "paper"]);
+
+    const setTheme = (value) => {
+      const theme = validThemes.has(value) ? value : "midnight";
+      document.body.dataset.theme = theme;
+      if (themeSelectRoot) themeSelectRoot.value = theme;
+      try {
+        localStorage.setItem(storageKey, theme);
+      } catch {
+        // No-op if storage is not available.
+      }
+    };
+
+    if (themeSelectRoot) {
+      themeSelectRoot.addEventListener("change", () => {
+        setTheme(themeSelectRoot.value);
+      });
+    }
+
+    let legacyThemeControl = null;
+    if (themeModeRoot) {
+      legacyThemeControl = setupSelectionBox("themeMode", {
+        onChange: (value) => setTheme(value),
+      });
+    }
+
+    let stored = "midnight";
+    try {
+      stored = localStorage.getItem(storageKey) || "midnight";
+    } catch {
+      stored = "midnight";
+    }
+
+    const normalized = validThemes.has(stored) ? stored : "midnight";
+    if (legacyThemeControl) {
+      legacyThemeControl.setValue(normalized, { silent: true });
+    }
+    setTheme(normalized);
   }
 
   function setStatus(message, mode = "info") {
@@ -6105,6 +6149,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   setupTabs();
   setupQuickJumps();
   setupDensityMode();
+  setupThemeMode();
 
   setExportAvailability();
   loadParameterPolicyState();
