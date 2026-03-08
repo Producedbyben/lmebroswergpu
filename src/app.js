@@ -4266,7 +4266,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
 
   function setupThemeMode() {
     const storageKey = "crt-ui-theme";
-    const validThemes = new Set(["midnight", "graphite", "classic", "dusk", "forest", "amber"]);
+    const validThemes = new Set(["midnight", "graphite", "classic", "dusk", "forest", "amber", "daylight", "paper"]);
 
     const setTheme = (value) => {
       const theme = validThemes.has(value) ? value : "midnight";
