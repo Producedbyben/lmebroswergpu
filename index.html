@@ -13,13 +13,8 @@
           <p class="app-kicker">Develop Workspace</p>
           <h1>Lost Media Emulator</h1>
           <p class="app-subtitle">Color-grade and degrade stills/video with realtime analog controls.</p>
-          <div class="app-workflow" role="group" aria-label="Workflow guide quick actions">
-            <button type="button" class="secondary-btn" data-jump-target="importPanel" title="Jump to import controls (Alt+1)">Import</button>
-            <button type="button" class="secondary-btn" data-jump-target="presetsPanel" title="Jump to preset controls (Alt+2)">Preset</button>
-            <button type="button" class="secondary-btn" data-jump-target="crtEffectsPanel" title="Jump to tuning controls (Alt+3)">Tune</button>
-            <button type="button" class="secondary-btn" data-jump-target="exportDock" title="Jump to export controls (Alt+4)">Export</button>
-          </div>
-                  </section>
+
+        </section>
         <section class="panel panel-collapsible" id="workspacePanel" aria-label="Workspace shortcuts">
           <header class="panel-header">Workspace shortcuts</header>
           <div class="panel-body quick-grid">
@@ -36,23 +31,6 @@
               <button type="button" class="secondary-btn" data-jump-target="previewPanel">Preview</button>
             </div>
             <p class="panel-hint">Tip: use <kbd>Alt+1</kbd> to <kbd>Alt+4</kbd> for the primary workflow shortcuts.</p>
-          </div>
-        </section>
-
-        <section class="panel panel-collapsible" id="sessionPanel" aria-label="Session and history controls">
-          <header class="panel-header">Session controls</header>
-          <div class="panel-body quick-grid">
-            <label>Control density
-              <div id="densityMode" class="selection-box selection-inline" role="radiogroup" aria-label="Control density mode">
-                <button type="button" data-value="comfortable" data-selected="true">Comfortable</button>
-                <button type="button" data-value="compact">Compact</button>
-              </div>
-            </label>
-            <div class="history-actions" aria-label="Look history controls">
-              <button id="undoLookBtn" type="button" class="secondary-btn" title="Undo look change (Ctrl/Cmd+Z)">Undo</button>
-              <button id="redoLookBtn" type="button" class="secondary-btn" title="Redo look change (Ctrl/Cmd+Shift+Z or Ctrl/Cmd+Y)">Redo</button>
-            </div>
-            <p class="panel-hint">Use history controls while dialing presets and macro systems to quickly compare design directions.</p>
           </div>
         </section>
 
@@ -171,6 +149,24 @@
                 <button type="button" data-value="0.25">25%</button>
               </div>
             </label>
+          </div>
+          <div class="toolbar-center top-utility-strip">
+            <div class="app-workflow app-workflow-toolbar" role="group" aria-label="Workflow guide quick actions">
+              <button type="button" class="secondary-btn" data-jump-target="importPanel" title="Jump to import controls (Alt+1)">Import</button>
+              <button type="button" class="secondary-btn" data-jump-target="presetsPanel" title="Jump to preset controls (Alt+2)">Preset</button>
+              <button type="button" class="secondary-btn" data-jump-target="crtEffectsPanel" title="Jump to tuning controls (Alt+3)">Tune</button>
+              <button type="button" class="secondary-btn" data-jump-target="exportDock" title="Jump to export controls (Alt+4)">Export</button>
+            </div>
+            <div class="toolbar-session" aria-label="Session and history controls">
+              <div id="densityMode" class="selection-box selection-inline" role="radiogroup" aria-label="Control density mode">
+                <button type="button" data-value="comfortable" data-selected="true">Comfortable</button>
+                <button type="button" data-value="compact">Compact</button>
+              </div>
+              <div class="history-actions" aria-label="Look history controls">
+                <button id="undoLookBtn" type="button" class="secondary-btn" title="Undo look change (Ctrl/Cmd+Z)">Undo</button>
+                <button id="redoLookBtn" type="button" class="secondary-btn" title="Redo look change (Ctrl/Cmd+Shift+Z or Ctrl/Cmd+Y)">Redo</button>
+              </div>
+            </div>
           </div>
           <div class="toolbar-right compare-actions compact-actions">
             <button id="compareHoldBtn" type="button" title="Hold pointer or Space for temporary compare.">Compare</button>
