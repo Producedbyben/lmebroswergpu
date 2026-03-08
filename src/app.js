@@ -4330,6 +4330,15 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     return Math.max(0, Number(exportResolutionControl?.getValue()) || 0);
   }
 
+  function getSelectedRenderModeValue() {
+    return document.getElementById("stillRenderQuality")?.querySelector('button[data-selected="true"]')?.dataset.value || "0";
+  }
+
+  function getSelectedRenderMaxPixels() {
+    const mode = getSelectedRenderModeValue();
+    return mode === "match-preview" ? getPreviewMaxPixels() : Math.max(0, Number(mode) || 0);
+  }
+
   function markPreviewDirty() {
     previewDirty = true;
   }
@@ -5481,8 +5490,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
       return;
     }
 
-    const mode = document.getElementById("stillRenderQuality")?.querySelector('button[data-selected="true"]')?.dataset.value || "0";
-    const maxPixels = mode === "match-preview" ? getPreviewMaxPixels() : Math.max(0, Number(mode) || 0);
+    const maxPixels = getSelectedRenderMaxPixels();
     const sourceSize = getPipelineSourceSize();
     let stillWidth = sourceSize.width;
     let stillHeight = sourceSize.height;
@@ -5534,7 +5542,12 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
       const selectedFormat = exportFormatControl?.getValue() || "mp4";
       const mustUseRealtimeAudio = includeOriginalAudio && loadedSourceType === "video";
       const maxExportEdge = getExportMaxEdge();
-      const baseExportSize = fitExportSize(canvas.width, canvas.height, { maxEdge: maxExportEdge });
+      const renderMaxPixels = getSelectedRenderMaxPixels();
+      const exportViewport = getPreviewView();
+      const exportSourceSize = getPipelineSourceSize();
+      const viewportBaseWidth = Math.max(1, Math.round(exportSourceSize.width * exportViewport.width));
+      const viewportBaseHeight = Math.max(1, Math.round(exportSourceSize.height * exportViewport.height));
+      const baseExportSize = fitExportSize(viewportBaseWidth, viewportBaseHeight, { maxEdge: maxExportEdge, maxPixels: renderMaxPixels });
       const mp4ExportSize = fitExportSize(baseExportSize.width, baseExportSize.height, { maxPixels: MAX_AVC_CODED_PIXELS, forceEven: true });
       const exportSize = selectedFormat === "webm" || mustUseRealtimeAudio ? baseExportSize : mp4ExportSize;
       const exportCanvas = document.createElement("canvas");
@@ -5566,7 +5579,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
             setStatus(`Realtime export frame ${current}/${total}`, "info");
           },
           signal: activeExportController.signal,
-          getRenderOptions: (t) => readOSDOptions(t),
+          getRenderOptions: (t) => ({ ...readOSDOptions(t), sourceView: exportViewport }),
         });
       } else {
         await exportMp4({
@@ -5587,7 +5600,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
           },
           signal: activeExportController.signal,
           bitrateScale: qualityMultiplier,
-          getRenderOptions: (t) => readOSDOptions(t),
+          getRenderOptions: (t) => ({ ...readOSDOptions(t), sourceView: exportViewport }),
         });
       }
       setStatus("Export finished. Download should begin automatically.", "success");
