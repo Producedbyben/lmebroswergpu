@@ -3171,10 +3171,16 @@ class WebGL2RendererAdapter extends LegacyRendererAdapter {
 
 function createRendererAdapter() {
   const search = new URLSearchParams(window.location.search);
+  const debugRenderDiagnostics = search.get("debugRender") === "1";
   const forceRenderer = (search.get("renderer") || "").toLowerCase();
   // Keep legacy as the default renderer path for stability.
-  // GPU/offscreen adapters are opt-in via `?renderer=` for controlled testing.
+  // GPU/offscreen adapters are opt-in via `?renderer=` for controlled testing,
+  // and only enabled while diagnostics mode is active.
   if (!forceRenderer) return new LegacyRendererAdapter();
+  if (!debugRenderDiagnostics) {
+    console.warn("Ignoring forced renderer because debug diagnostics mode is disabled.", { forceRenderer });
+    return new LegacyRendererAdapter();
+  }
   return createRendererAdapterAutomatic(forceRenderer);
 }
 
